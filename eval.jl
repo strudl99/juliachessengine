@@ -55,16 +55,26 @@ const queen_square_table = [
     [-10, 0, 5, 0, 0, 0, 0, -10],
     [-20, -10, -10, -5, -5, -10, -10, -20]]
 
-const king_square_table =  [-30, -40, -40, -50, -50, -40, -40, -30],
+const king_square_table =  [[-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
 [-20, -30, -30, -40, -40, -30, -30, -20],
 [-10, -20, -20, -20, -20, -20, -20, -10],
 [20, 20, 0, 0, 0, 0, 20, 20],
-[20, 30, 10, 0, 0, 10, 30, 20]
+[20, 30, 10, 0, 0, 10, 30, 20]]
 
+const king_endgame_square_table = [
+[-50,-40,-30,-20,-20,-30,-40,-50],
+[-30,-20,-10,  0,  0,-10,-20,-30],
+[-30,-10, 20, 30, 30, 20,-10,-30],
+[-30,-10, 30, 40, 40, 30,-10,-30],
+[-30,-10, 30, 40, 40, 30,-10,-30],
+[-30,-10, 20, 30, 30, 20,-10,-30],
+[-30,-30,  0,  0,  0,  0,-30,-30],
+[-50,-30,-30,-30,-30,-30,-30,-50]]
 
+endgame = false
 function convert_square(square, is_white)
     square -= 1
     row = !is_white ? 7 - (square ÷ 8) : square ÷ 8
@@ -239,17 +249,16 @@ function piece_value(piece, square,  chessboard)
     score = 0
     row_black = convert_square(square, false)[1]
     column_black = convert_square(square, false)[2]
-
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
         score += 100 + pawn_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KNIGHT)
-        score += 300 + knight_square_table[row_white][column_white]
+        score += 350 + knight_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, BISHOP)
-        score += 300 + bishop_square_table[row_white][column_white]
+        score += 400 + bishop_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, ROOK)
         score += 500 + rook_square_table[row_white][column_white]
@@ -258,26 +267,35 @@ function piece_value(piece, square,  chessboard)
         score += 900 + queen_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KING)
-        score += 10000 + king_square_table[row_white][column_white]
+        if endgame == false
+            score += 10000 + king_square_table[row_black][column_black]
+            else
+            score += 10000 + king_endgame_square_table[row_black][column_black]
+        end
     end
     if piece == Piece(BLACK, PAWN)
-        score += -100 + pawn_square_table[row_black][column_black]
+        score += -100 + pawn_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, KNIGHT)
-        score += -300 + knight_square_table[row_black][column_black]
+        score += -350 + knight_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, BISHOP)
-        score += -300 + bishop_square_table[row_black][column_black]
+        score += -400 + bishop_square_table[row_black][column_black]* (-1)
     end
     if piece == Piece(BLACK, ROOK)
-        score += -500 + rook_square_table[row_black][column_black]
+        score += -500 + rook_square_table[row_black][column_black]* (-1)
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -900 + queen_square_table[row_black][column_black]
+        score += -900 + queen_square_table[row_black][column_black]* (-1)
     end
     if piece == Piece(BLACK, KING)
-        score += -10000 + king_square_table[row_black][column_black]
+        if endgame == false
+        score += -10000 + king_square_table[row_black][column_black]* (-1)
+        else
+        score += -10000 + king_endgame_square_table[row_black][column_black]* (-1)
+        end
     end
+    
     return score
 
 end
