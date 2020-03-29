@@ -37,7 +37,6 @@ function calc_best_move(chessboard, depth, white_player, zug)
 end
 
 # simmple minimax algorithm with alpha beta pruning
-
 function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
     if depth == 0
         return evaluate_board(chessboard)
