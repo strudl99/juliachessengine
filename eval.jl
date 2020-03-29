@@ -65,27 +65,15 @@ const king_square_table =  [-30, -40, -40, -50, -50, -40, -40, -30],
 [20, 30, 10, 0, 0, 10, 30, 20]
 
 
-function random(chessboard)
-    
-    all_moves = moves(chessboard)
-    checkmoves = filter(m->ischeck(domove(chessboard, m)), all_moves)
-    if !isempty(checkmoves)
-        move = rand(checkmoves)
-    else
-        move = rand(all_moves)
-    end
-        
-        # println(b)
-    return move
-        
-end
-
 function convert_square(square, is_white)
     square -= 1
     row = !is_white ? 7 - (square ÷ 8) : square ÷ 8
     column = square % 8 
     return (row + 1, column + 1)
 end
+
+# function that calculate the piece value of the board + the value of the square table 
+
 function piece_value(piece, square,  chessboard)
     score = 0
     row_black = convert_square(square, false)[1]
@@ -162,9 +150,6 @@ function sort_moves(chessboard)
         push!(isort, (evaluate_board(chessboard), move))
         undomove!(chessboard, u)
     end
-    all_moves_tuple = sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r)
-    all_moves_sorted = last.(all_moves_tuple)
-    return all_moves_sorted
-
-
+    all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
+    return all_moves
 end

@@ -1,6 +1,7 @@
 using Chess, Chess.Book
 include("minmax.jl")
 
+# function to play game against itself
 
 function play_game()
     b = startboard()

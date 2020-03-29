@@ -1,6 +1,8 @@
 using Chess, Chess.Book
 include("eval.jl")
 
+# function that goes through all moves and picks the best one with minmax algorithm
+
 function calc_best_move(chessboard, depth, white_player, zug)
     # keinen "Folder" zugriff mehr nach zug 7 -> geschwindigkeitsoptimierung
     if zug < 8
@@ -29,16 +31,14 @@ function calc_best_move(chessboard, depth, white_player, zug)
             best_value = value
             best_move = move
         end
-        
-        # println(best_move)
-        # println(value)
-        # println(best_value)
+
     end
     return best_move
 end
 
-function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
+# simmple minimax algorithm with alpha beta pruning
 
+function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
     if depth == 0
         return evaluate_board(chessboard)
     end
@@ -50,7 +50,7 @@ function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
         end
     end
     for move in leg
-        # println(move)
+
         u = domove!(chessboard, move)
         value = minimax(depth - 1, chessboard, alpha, beta, !isMaximisingPlayer)
         if isMaximisingPlayer
