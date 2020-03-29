@@ -5,9 +5,12 @@ include("minmax.jl")
 
 function play_game()
     @time begin
-        b = startboard()
+        g = Game()
+    
+        
         number_moves = 0
-        while !isterminal(b)
+        while !isterminal(g)
+            b = board(g)
             if sidetomove(b) == WHITE
                 number_moves += 1
                 move = calc_best_move(b, 5, false, number_moves)
@@ -21,9 +24,9 @@ function play_game()
                     end
                 end
                 print(number_moves, ". ", movetosan(b, move))
-            
+                domove!(g, move)  
             else
-                move = calc_best_move(b, 5, true, number_moves)
+                move = calc_best_move(b, 3, true, number_moves)
                 if move === nothing
                     if ischeck(b)
                         println("Checkmate White")
@@ -34,9 +37,13 @@ function play_game()
                     end
                 end
                 print(" ", movetosan(b, move), " ")
+                domove!(g, move)
             end
-            domove!(b, move)
-
         end
+        
+        
+        print(g)
+        
+
     end
 end
