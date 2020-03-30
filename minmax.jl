@@ -5,14 +5,14 @@ include("eval.jl")
 
 function calc_best_move(chessboard, depth, white_player, zug)
 
-    if zug < 8
-        bookmove = nothing
+   
+    bookmove = nothing
 
-        bookmove = pickbookmove(chessboard, "openings/carlsen.obk", minscore = 0.01, mingamecount = 10)
-        if bookmove !== nothing
-            return bookmove
-        end
+    bookmove = pickbookmove(chessboard, "openings/carlsen.obk", minscore = 0.01, mingamecount = 10)
+    if bookmove !== nothing
+        return bookmove
     end
+    
     all_moves = sort_moves(chessboard)
     side = sidetomove(chessboard)
     best_move = nothing
@@ -36,7 +36,7 @@ function calc_best_move(chessboard, depth, white_player, zug)
     return best_move
 end
 
-# simmple minimax algorithm with alpha beta pruning
+
 function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
     if depth == 0
         return evaluate_board(chessboard)

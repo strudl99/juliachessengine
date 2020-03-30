@@ -84,12 +84,13 @@ end
 
 function double_pawns(chessboard)
     a = b = c = d = e = f = g = h = 0
+    pwn = sidetomove(chessboard) == WHITE ? PIECE_WP : PIECE_BP
     db = false
     prev_a = prev_b = prev_c = prev_d = prev_e = prev_f = prev_g = prev_h = 1e8
     for i in range(2, stop = 7, step = 1)
-        if sidetomove(chessboard) == WHITE
+
             
-            if pieceon(chessboard, FILE_A, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_A, rank(Square(i))) == pwn
                 
                 if prev_a == i - 1
                     db = true
@@ -99,7 +100,7 @@ function double_pawns(chessboard)
                 a += 1
                 
             end
-            if pieceon(chessboard, FILE_B, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_B, rank(Square(i))) == pwn
                 b += 1
                 if prev_b == i - 1
                     db = true
@@ -108,7 +109,7 @@ function double_pawns(chessboard)
                 prev_b = i
                 
             end
-            if pieceon(chessboard, FILE_C, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_C, rank(Square(i))) == pwn
                 c += 1
                 if prev_c == i - 1
                     db = true
@@ -117,7 +118,7 @@ function double_pawns(chessboard)
                 prev_c = i
                 
             end
-            if pieceon(chessboard, FILE_D, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_D, rank(Square(i))) == pwn
                 d += 1
                 if prev_d == i - 1
                     db = true
@@ -126,7 +127,7 @@ function double_pawns(chessboard)
                 prev_d = i
                 
             end
-            if pieceon(chessboard, FILE_E, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_E, rank(Square(i))) == pwn
                 e += 1
                 if prev_e == i - 1
                     db = true
@@ -135,7 +136,7 @@ function double_pawns(chessboard)
                 prev_e = i
                 
             end
-            if pieceon(chessboard, FILE_F, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_F, rank(Square(i))) == pwn
                 f += 1
                 if prev_f == i - 1
                     db = true
@@ -144,7 +145,7 @@ function double_pawns(chessboard)
                 prev_f = i
                 
             end
-            if pieceon(chessboard, FILE_G, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_G, rank(Square(i))) == pwn
                 g += 1
                 if prev_g == i - 1
                     db = true
@@ -153,7 +154,7 @@ function double_pawns(chessboard)
                 prev_g = i
                 
             end
-            if pieceon(chessboard, FILE_H, rank(Square(i))) == PIECE_WP
+            if pieceon(chessboard, FILE_H, rank(Square(i))) == pwn
                 h += 1
                 if prev_h == i - 1
                     db = true
@@ -162,81 +163,8 @@ function double_pawns(chessboard)
                 prev_h = i
                 
             end
-        else
-
-            if pieceon(chessboard, FILE_A, rank(Square(i))) == PIECE_BP
-                a += 1
-                if prev_a == i - 1
-                    db = true
-                    break
-                end
-                prev_a = i
-                
-            end
-            if pieceon(chessboard, FILE_B, rank(Square(i))) == PIECE_BP
-                b += 1
-                if prev_b == i - 1
-                    db = true
-                    break
-                end
-                prev_b = i
-                
-            end
-            if pieceon(chessboard, FILE_C, rank(Square(i))) == PIECE_BP
-                c += 1
-                if prev_c == i - 1
-                    db = true
-                    break
-                end
-                prev_c = i
-                
-            end
-            if pieceon(chessboard, FILE_D, rank(Square(i))) == PIECE_BP
-                d += 1
-                if prev_d == i - 1
-                    db = true
-                    break
-                end
-                prev_d = i
-                
-            end
-            if pieceon(chessboard, FILE_E, rank(Square(i))) == PIECE_BP
-                e += 1
-                if prev_e == i - 1
-                    db = true
-                    break
-                end
-                prev_e = i
-                
-            end
-            if pieceon(chessboard, FILE_F, rank(Square(i))) == PIECE_BP
-                f += 1
-                if prev_f == i - 1
-                    db = true
-                    break
-                end
-                prev_f = i
-                
-            end
-            if pieceon(chessboard, FILE_G, rank(Square(i))) == PIECE_BP
-                g += 1
-                if prev_g == i - 1
-                    db = true
-                    break
-                end
-                prev_g = i
-                
-            end
-            if pieceon(chessboard, FILE_H, rank(Square(i))) == PIECE_BP
-                g += 1
-                if prev_h == i - 1
-                    db = true
-                    break
-                end
-                prev_h = i
-                
-            end
-        end
+        
+        
     end
 
     return db
