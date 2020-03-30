@@ -31,8 +31,8 @@ function uciCommunication()
                 end
             
             elseif "fen" in input
-                i = indexin(["fen"], input)
-                board = fromfen(input[i + 1])
+                i = indexin(["fen"], input)[1]
+                board = fromfen(string(input[i + 1]))
             end
         elseif "go" in input
             move = calc_best_move(board, 5, sidetomove(board) == WHITE ? false : true, 0)

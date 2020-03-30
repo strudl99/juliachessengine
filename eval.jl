@@ -90,79 +90,79 @@ function double_pawns(chessboard)
     for i in range(2, stop = 7, step = 1)
 
             
-            if pieceon(chessboard, FILE_A, rank(Square(i))) == pwn
+        if pieceon(chessboard, FILE_A, rank(Square(i))) == pwn
                 
-                if prev_a == i - 1
-                    db = true
-                    break
-                end
-                prev_a = i
-                a += 1
-                
+            if prev_a == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_B, rank(Square(i))) == pwn
-                b += 1
-                if prev_b == i - 1
-                    db = true
-                    break
-                end
-                prev_b = i
+            prev_a = i
+            a += 1
                 
+        end
+        if pieceon(chessboard, FILE_B, rank(Square(i))) == pwn
+            b += 1
+            if prev_b == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_C, rank(Square(i))) == pwn
-                c += 1
-                if prev_c == i - 1
-                    db = true
-                    break
-                end
-                prev_c = i
+            prev_b = i
                 
+        end
+        if pieceon(chessboard, FILE_C, rank(Square(i))) == pwn
+            c += 1
+            if prev_c == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_D, rank(Square(i))) == pwn
-                d += 1
-                if prev_d == i - 1
-                    db = true
-                    break
-                end
-                prev_d = i
+            prev_c = i
                 
+        end
+        if pieceon(chessboard, FILE_D, rank(Square(i))) == pwn
+            d += 1
+            if prev_d == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_E, rank(Square(i))) == pwn
-                e += 1
-                if prev_e == i - 1
-                    db = true
-                    break
-                end
-                prev_e = i
+            prev_d = i
                 
+        end
+        if pieceon(chessboard, FILE_E, rank(Square(i))) == pwn
+            e += 1
+            if prev_e == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_F, rank(Square(i))) == pwn
-                f += 1
-                if prev_f == i - 1
-                    db = true
-                    break
-                end
-                prev_f = i
+            prev_e = i
                 
+        end
+        if pieceon(chessboard, FILE_F, rank(Square(i))) == pwn
+            f += 1
+            if prev_f == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_G, rank(Square(i))) == pwn
-                g += 1
-                if prev_g == i - 1
-                    db = true
-                    break
-                end
-                prev_g = i
+            prev_f = i
                 
+        end
+        if pieceon(chessboard, FILE_G, rank(Square(i))) == pwn
+            g += 1
+            if prev_g == i - 1
+                db = true
+                break
             end
-            if pieceon(chessboard, FILE_H, rank(Square(i))) == pwn
-                h += 1
-                if prev_h == i - 1
-                    db = true
-                    break
-                end
-                prev_h = i
+            prev_g = i
                 
+        end
+        if pieceon(chessboard, FILE_H, rank(Square(i))) == pwn
+            h += 1
+            if prev_h == i - 1
+                db = true
+                break
             end
+            prev_h = i
+                
+        end
         
         
     end
@@ -197,7 +197,7 @@ function piece_value(piece, square,  chessboard)
     if piece == Piece(WHITE, KING)
         if endgame == false
             score += 10000 + king_square_table[row_black][column_black]
-            else
+        else
             score += 10000 + king_endgame_square_table[row_black][column_black]
         end
     end
@@ -208,19 +208,19 @@ function piece_value(piece, square,  chessboard)
         score += -350 + knight_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, BISHOP)
-        score += -400 + bishop_square_table[row_black][column_black]* (-1)
+        score += -400 + bishop_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, ROOK)
-        score += -500 + rook_square_table[row_black][column_black]* (-1)
+        score += -500 + rook_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -900 + queen_square_table[row_black][column_black]* (-1)
+        score += -900 + queen_square_table[row_black][column_black] * (-1)
     end
     if piece == Piece(BLACK, KING)
         if endgame == false
-        score += -10000 + king_square_table[row_black][column_black]* (-1)
+            score += -10000 + king_square_table[row_black][column_black] * (-1)
         else
-        score += -10000 + king_endgame_square_table[row_black][column_black]* (-1)
+            score += -10000 + king_endgame_square_table[row_black][column_black] * (-1)
         end
     end
     
@@ -262,4 +262,30 @@ function sort_moves(chessboard)
     end
     all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
     return all_moves
+end
+
+function count_pieces(chessboard)
+    piece_count_prev = 0
+    for square in range(1, stop = 64, step = 1)
+        if pieceon(chessboard, Square(square)) != EMPTY
+            piece_count_prev += 1
+        end
+    end
+    return piece_count_prev
+end
+
+function capture_moves(chessboard)
+    capture_moves = []
+    prev = count_pieces(chessboard)
+    all_moves = moves(chessboard)
+    for move in all_moves
+        u = domove!(chessboard, move)
+        current = count_pieces(chessboard)
+        if current != prev
+            push!(capture_moves, move)
+        end
+        undomove!(chessboard, u)
+    end
+    return capture_moves
+
 end

@@ -1,11 +1,46 @@
 using Chess, Chess.Book
 include("eval.jl")
 
-# function that goes through all moves and picks the best one with minmax algorithm
 
+
+function quiescence(alpha, beta, chessboard, depth)
+    if depth <= 0
+        return evaluate_board(chessboard)
+    end
+    
+    score = evaluate_board(chessboard)
+    if score >= beta
+        return beta
+    end
+
+    if score > alpha
+        alpha = score
+    end
+
+    all_moves = capture_moves(chessboard)
+    if !isempty(all_moves)
+        for move in all_moves
+            u = domove!(chessboard, move)
+            score = -quiescence(-beta, -alpha, chessboard, depth - 1)
+            undomove!(chessboard, u)
+            if score >= beta
+                return beta
+            end 
+            if score > alpha
+            
+                alpha = score
+            end
+        
+        end
+    else
+        return evaluate_board(chessboard)
+    end
+
+    return alpha
+end
+# function that goes through all moves and picks the best one with minmax algorithm
 function calc_best_move(chessboard, depth, white_player, zug)
 
-   
     bookmove = nothing
 
     bookmove = pickbookmove(chessboard, "openings/carlsen.obk", minscore = 0.01, mingamecount = 10)
@@ -39,7 +74,8 @@ end
 
 function minimax(depth, chessboard, alpha, beta, isMaximisingPlayer)
     if depth == 0
-        return evaluate_board(chessboard)
+        return quiescence(alpha, beta, chessboard, 1)
+        # return evaluate_board(chessboard)
     end
     leg = moves(chessboard)
     best_value = isMaximisingPlayer ? -1e9 : 1e9 
