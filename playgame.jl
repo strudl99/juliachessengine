@@ -19,7 +19,7 @@ function play_game()
         if sidetomove(b) == WHITE
             number_moves += 1
             if isplayerblack == true
-                move = calc_best_move(b, 5, false, number_moves)
+                move = calc_best_move(b, 5, true, number_moves)
                 move =  movetosan(b, move)
             else
                 print("Move: ")

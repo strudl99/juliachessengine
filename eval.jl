@@ -180,19 +180,19 @@ function piece_value(piece, square,  chessboard)
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
-        score += 100 + pawn_square_table[row_white][column_white]
+        score += 10  + pawn_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KNIGHT)
-        score += 350 + knight_square_table[row_white][column_white]
+        score += 35  + knight_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, BISHOP)
-        score += 400 + bishop_square_table[row_white][column_white]
+        score += 40  + bishop_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, ROOK)
-        score += 500 + rook_square_table[row_white][column_white]
+        score += 50 + rook_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, QUEEN)
-        score += 900 + queen_square_table[row_white][column_white]
+        score += 90  + queen_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KING)
         if endgame == false
@@ -202,23 +202,23 @@ function piece_value(piece, square,  chessboard)
         end
     end
     if piece == Piece(BLACK, PAWN)
-        score += -100 + pawn_square_table[row_black][column_black] * (-1)
+        score += -10 + (pawn_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, KNIGHT)
-        score += -350 + knight_square_table[row_black][column_black] * (-1)
+        score += -35 + (knight_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, BISHOP)
-        score += -400 + bishop_square_table[row_black][column_black] * (-1)
+        score += -40 + (bishop_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, ROOK)
-        score += -500 + rook_square_table[row_black][column_black] * (-1)
+        score += -50 + (rook_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -900 + queen_square_table[row_black][column_black] * (-1)
+        score += -90 + (queen_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, KING)
         if endgame == false
-            score += -10000 + king_square_table[row_black][column_black] * (-1)
+            score += -10000  + (king_square_table[row_black][column_black] * (-1))
         else
             score += -10000 + king_endgame_square_table[row_black][column_black] * (-1)
         end
@@ -237,31 +237,30 @@ function evaluate_board(chessboard)
     if ischeckmate(chessboard)
         summe += side == WHITE ? 10000 : -10000
     end
-    if ischeck(chessboard)
-        summe += side == WHITE ? 50 : -50
-    end
-    if double_pawns(chessboard)
-        summe += side == WHITE ? -15 : 15
+    if double_pawns(chessboard) == true
+        summe += side == WHITE ? -3 : 3
     end
     return summe
 end
 
 function sort_moves(chessboard)
-    all_moves = moves(chessboard)
-    isort = []
-    r = false
-    if sidetomove(chessboard) == WHITE
+    @time begin
+        all_moves = moves(chessboard)
+        isort = []
         r = false
-    else
-        r = true
+        if sidetomove(chessboard) == WHITE
+            r = false
+        else
+            r = true
+        end
+        for move in all_moves
+            u = domove!(chessboard, move)
+            push!(isort, (evaluate_board(chessboard), move))
+            undomove!(chessboard, u)
+        end
+        all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
+        return all_moves
     end
-    for move in all_moves
-        u = domove!(chessboard, move)
-        push!(isort, (evaluate_board(chessboard), move))
-        undomove!(chessboard, u)
-    end
-    all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
-    return all_moves
 end
 
 function count_pieces(chessboard)

@@ -35,7 +35,7 @@ function uciCommunication()
                 board = fromfen(string(input[i + 1]))
             end
         elseif "go" in input
-            move = calc_best_move(board, 5, sidetomove(board) == WHITE ? false : true, 0)
+            move = calc_best_move(5, board)
             if move != nothing
                 move = tostring(move)
             else
