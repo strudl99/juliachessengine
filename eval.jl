@@ -180,19 +180,19 @@ function piece_value(piece, square,  chessboard)
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
-        score += 10  + pawn_square_table[row_white][column_white]
+        score += 100  + pawn_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KNIGHT)
-        score += 35  + knight_square_table[row_white][column_white]
+        score += 350  + knight_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, BISHOP)
-        score += 40  + bishop_square_table[row_white][column_white]
+        score += 400  + bishop_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, ROOK)
-        score += 50 + rook_square_table[row_white][column_white]
+        score += 500 + rook_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, QUEEN)
-        score += 90  + queen_square_table[row_white][column_white]
+        score += 900  + queen_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KING)
         if endgame == false
@@ -202,19 +202,19 @@ function piece_value(piece, square,  chessboard)
         end
     end
     if piece == Piece(BLACK, PAWN)
-        score += -10 + (pawn_square_table[row_black][column_black] * (-1))
+        score += -100 + (pawn_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, KNIGHT)
-        score += -35 + (knight_square_table[row_black][column_black] * (-1))
+        score += -350 + (knight_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, BISHOP)
-        score += -40 + (bishop_square_table[row_black][column_black] * (-1))
+        score += -400 + (bishop_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, ROOK)
-        score += -50 + (rook_square_table[row_black][column_black] * (-1))
+        score += -500 + (rook_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -90 + (queen_square_table[row_black][column_black] * (-1))
+        score += -900 + (queen_square_table[row_black][column_black] * (-1))
     end
     if piece == Piece(BLACK, KING)
         if endgame == false
@@ -288,3 +288,6 @@ function capture_moves(chessboard)
     return capture_moves
 
 end
+
+
+

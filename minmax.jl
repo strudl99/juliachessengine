@@ -1,8 +1,8 @@
 using Chess, Chess.Book
 include("eval.jl")
 
-
 # isn't really working
+
 function quiescence(alpha, beta, chessboard)
     all_moves = capture_moves(chessboard)
     score = evaluate_board(chessboard)
@@ -34,7 +34,7 @@ function calc_best_move(chessboard, depth)
 
     bookmove = nothing
 
-    bookmove = pickbookmove(chessboard, "openings/carlsen.obk", minscore = 0.01, mingamecount = 10)
+    bookmove = pickbookmove(chessboard, "openings/carlsen.obk", minscore = 0.01, mingamecount = 20)
     if bookmove !== nothing
         return bookmove
     end
@@ -42,29 +42,29 @@ function calc_best_move(chessboard, depth)
     current_depth = 0
     max_death = depth
     best_move = nothing
-    best_value = side == WHITE ? -1e9 : 1e9
     while current_depth < max_death
+    best_value = side == WHITE ? -1e8 : 1e8 
+	
         current_depth += 1
         all_moves = sort_moves(chessboard)
         if depth >= 4
-            if length(all_moves) > 10
-                all_moves = all_moves[1:10]
+            if length(all_moves) > 20
+                all_moves = all_moves[1:20]
             end
         end
         for move in all_moves
             u = domove!(chessboard, move)
             value = negamax(current_depth, -1e8, 1e8, chessboard)
             undomove!(chessboard, u)
-            if side == WHITE && value > best_value
+            if (value > best_value) && side == WHITE
                 best_value = value
                 best_move = move
-            elseif side == BLACK && value < best_value
-                best_value = value
-                best_move = move
-            end
-            
-        end
-        println("info score cp ", best_value, " depth ", current_depth)
+            elseif (value < best_value) && side == BLACK
+		best_value = value
+		best_move = move
+	     end
+	end
+        println("info score cp ", best_value," bestmove: ", best_move," depth ", current_depth)
     end
     return best_move
 end
