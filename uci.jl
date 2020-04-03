@@ -33,10 +33,20 @@ function uciCommunication()
             elseif "fen" in input
                 i = indexin(["fen"], input)[1]
                 board = fromfen(string(input[i + 1]))
+                if "moves" in input
+                    i = indexin(["moves"], input)[1] + 1
+                    n = length(input)
+                    for index in i:n
+                        move = string(input[index])
+                        println(move)
+                        domove!(board, move)
+                    end
+
+                end
             end
         elseif "go" in input
-	    #why is depth 4 better than 5!?
-            move = calc_best_move(board, 3)
+	    # why is depth 4 better than 5!?
+            move = calc_best_move(board, 4)
             if move != nothing
                 move = tostring(move)
             else
@@ -46,9 +56,9 @@ function uciCommunication()
             println(board)
             
         end
-	if "stop" in input
-	    break
-	end
+       	if "stop" in input
+       	    break
+       	end
         if "quit" in input
             break
         end

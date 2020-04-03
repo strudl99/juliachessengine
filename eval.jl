@@ -198,7 +198,7 @@ function piece_value(piece, square,  chessboard)
         if endgame == false
             score += 10000 + king_square_table[row_black][column_black]
         else
-            score += 10000 + king_endgame_square_table[row_black][column_black]
+            score += 10000  + (king_endgame_square_table[row_black][column_black] * (-1))
         end
     end
     if piece == Piece(BLACK, PAWN)
@@ -219,18 +219,17 @@ function piece_value(piece, square,  chessboard)
     if piece == Piece(BLACK, KING)
         if endgame == false
             score += -10000  + (king_square_table[row_black][column_black] * (-1))
-        else
-            score += -10000 + king_endgame_square_table[row_black][column_black] * (-1)
+        else 
+            score += -10000  + (king_endgame_square_table[row_black][column_black] * (-1))
         end
     end
-    
     return score
 
 end
 function evaluate_board(chessboard)
     number_of_pieces = count_pieces(chessboard)
     if number_of_pieces < 12
-	global endgame = true
+       	global endgame = true
     end
     summe = 0
     side = sidetomove(chessboard)
@@ -238,39 +237,35 @@ function evaluate_board(chessboard)
         summe += piece_value(pieceon(chessboard, Square(square)), square, chessboard)
         i = square
     end
-    if ischeckmate(chessboard)
-        summe += side == WHITE ? 10000 : -10000
-    end
     if double_pawns(chessboard) == true
-        summe += side == WHITE ? -3 : 3
+        summe += side == WHITE ? 3 : -3
     end
     if endgame == true
-	if ischeck(chessboard)
-	   summe += side == WHITE ? 100 : -100
-	end
+       	if ischeck(chessboard)
+        	   summe += side == WHITE ? -100 : 100
+       	end
 
     end
     return summe
 end
 
 function sort_moves(chessboard)
-    @time begin
-        all_moves = moves(chessboard)
-        isort = []
+
+    all_moves = moves(chessboard)
+    isort = []
+    r = false
+    if sidetomove(chessboard) == WHITE
         r = false
-        if sidetomove(chessboard) == WHITE
-            r = false
-        else
-            r = true
-        end
-        for move in all_moves
-            u = domove!(chessboard, move)
-            push!(isort, (evaluate_board(chessboard), move))
-            undomove!(chessboard, u)
-        end
-        all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
-        return all_moves
+    else
+        r = true
     end
+    for move in all_moves
+        u = domove!(chessboard, move)
+        push!(isort, (evaluate_board(chessboard), move))
+        undomove!(chessboard, u)
+    end
+    all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
+    return all_moves
 end
 
 function count_pieces(chessboard)
