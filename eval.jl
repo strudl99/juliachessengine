@@ -228,6 +228,10 @@ function piece_value(piece, square,  chessboard)
 
 end
 function evaluate_board(chessboard)
+    number_of_pieces = count_pieces(chessboard)
+    if number_of_pieces < 12
+	global endgame = true
+    end
     summe = 0
     side = sidetomove(chessboard)
     for square in range(1, stop = 64, step = 1)
@@ -239,6 +243,12 @@ function evaluate_board(chessboard)
     end
     if double_pawns(chessboard) == true
         summe += side == WHITE ? -3 : 3
+    end
+    if endgame == true
+	if ischeck(chessboard)
+	   summe += side == WHITE ? 100 : -100
+	end
+
     end
     return summe
 end

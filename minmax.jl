@@ -43,7 +43,7 @@ function calc_best_move(chessboard, depth)
     max_death = depth
     best_move = nothing
     while current_depth < max_death
-    best_value = side == WHITE ? -1e8 : 1e8 
+        best_value = -1e8 
 	
         current_depth += 1
         all_moves = sort_moves(chessboard)
@@ -54,24 +54,22 @@ function calc_best_move(chessboard, depth)
         end
         for move in all_moves
             u = domove!(chessboard, move)
-            value = negamax(current_depth, -1e8, 1e8, chessboard)
+            value = -negamax(current_depth, -1e8, 1e8, chessboard, side == WHITE ? -1 : 1)
             undomove!(chessboard, u)
-            if (value > best_value) && side == WHITE
+            if (value > best_value)
                 best_value = value
                 best_move = move
-            elseif (value < best_value) && side == BLACK
-		best_value = value
-		best_move = move
-	     end
-	end
-        println("info score cp ", best_value," bestmove: ", best_move," depth ", current_depth)
+            
+      	     end
+       	end
+        println("info score cp ", best_value, " bestmove: ", best_move, " depth ", current_depth)
     end
     return best_move
 end
 
-function negamax(depth, alpha, beta, chessboard)
+function negamax(depth, alpha, beta, chessboard, color)
     if depth <= 0
-        return evaluate_board(chessboard)
+        return evaluate_board(chessboard) * color
     end
     bestscore = -1e8
     score = -1e8
@@ -79,13 +77,13 @@ function negamax(depth, alpha, beta, chessboard)
 
     for move in leg
         u = domove!(chessboard, move)
-        score = -negamax(depth - 1, -beta, -alpha, chessboard)
+        score = -negamax(depth - 1, -beta, -alpha, chessboard, -color)
         undomove!(chessboard, u)
         if score > bestscore
             bestscore = score
             if score > alpha
                 if score >= beta
-                    return beta
+                    return score
                 end
                 alpha = score
             end

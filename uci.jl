@@ -35,7 +35,8 @@ function uciCommunication()
                 board = fromfen(string(input[i + 1]))
             end
         elseif "go" in input
-            move = calc_best_move(board, 5)
+	    #why is depth 4 better than 5!?
+            move = calc_best_move(board, 3)
             if move != nothing
                 move = tostring(move)
             else
