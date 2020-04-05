@@ -1,6 +1,5 @@
 using Chess, Chess.Book
 
-
 const pawn_square_table = [
      [0,  0,  0,  0,  0,  0,  0,  0],
      [5, 10, 10,-20,-20, 10, 10,  5],
@@ -55,7 +54,8 @@ const queen_square_table = [
     [-10, 0, 5, 0, 0, 0, 0, -10],
     [-20, -10, -10, -5, -5, -10, -10, -20]]
 
-const king_square_table =  [[-30, -40, -40, -50, -50, -40, -40, -30],
+const king_square_table = 
+[[-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
 [-30, -40, -40, -50, -50, -40, -40, -30],
@@ -166,8 +166,11 @@ function double_pawns(chessboard)
         
         
     end
-
-    return db
+    if db == true
+        return -10
+    else
+        return 0
+    end
 
 end
 
@@ -180,7 +183,7 @@ function piece_value(piece, square,  chessboard)
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
-        score += 100  + pawn_square_table[row_white][column_white]
+        score += 100  + pawn_square_table[row_white][column_white]   + double_pawns(chessboard)
     end
     if piece == Piece(WHITE, KNIGHT)
         score += 350  + knight_square_table[row_white][column_white]
@@ -189,43 +192,68 @@ function piece_value(piece, square,  chessboard)
         score += 400  + bishop_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, ROOK)
-        score += 500 + rook_square_table[row_white][column_white]
+        score += 500 + rook_square_table[row_white][column_white]  + rook_open_file(chessboard)
     end
     if piece == Piece(WHITE, QUEEN)
         score += 900  + queen_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, KING)
         if endgame == false
-            score += 10000 + king_square_table[row_black][column_black]
+            score += 10000 + king_square_table[row_white][column_white]
         else
-            score += 10000  + (king_endgame_square_table[row_black][column_black] * (-1))
+            score += 10000  + (king_endgame_square_table[row_white][column_white])
         end
     end
     if piece == Piece(BLACK, PAWN)
-        score += -100 + (pawn_square_table[row_black][column_black] * (-1))
+        score += -100 - (pawn_square_table[row_black][column_black] ) - double_pawns(chessboard)
     end
     if piece == Piece(BLACK, KNIGHT)
-        score += -350 + (knight_square_table[row_black][column_black] * (-1))
+        score += -350 - (knight_square_table[row_black][column_black] )
     end
     if piece == Piece(BLACK, BISHOP)
-        score += -400 + (bishop_square_table[row_black][column_black] * (-1))
+        score += -400 - (bishop_square_table[row_black][column_black] ) 
     end
     if piece == Piece(BLACK, ROOK)
-        score += -500 + (rook_square_table[row_black][column_black] * (-1))
+        score += -500 - (rook_square_table[row_black][column_black] )  - rook_open_file(chessboard)
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -900 + (queen_square_table[row_black][column_black] * (-1))
+        score += -900 - (queen_square_table[row_black][column_black])
     end
     if piece == Piece(BLACK, KING)
         if endgame == false
-            score += -10000  + (king_square_table[row_black][column_black] * (-1))
+            score += -10000  - (king_square_table[row_black][column_black])
         else 
-            score += -10000  + (king_endgame_square_table[row_black][column_black] * (-1))
+            score += -10000  - (king_endgame_square_table[row_black][column_black])
         end
     end
     return score
 
 end
+
+function rook_open_file(chessboard)
+    e = emptysquares(chessboard)
+    if e == SS_FILE_A || e == SS_FILE_B || e ==  SS_FILE_C || e == SS_FILE_D || e == SS_FILE_E || e == SS_FILE_F || e == SS_FILE_G || e == SS_FILE_H
+        return 10
+    else 
+        return 0
+    end
+end
+
+function double_bishops(chessboard)
+    bb_count = 0
+    bw_count = 0
+    sum = 0
+    for i in range(1, stop = 64, step = 1)
+        if pieceon(chessboard, Square(i)) == PIECE_BB
+            bb_count += 1
+        end
+        if pieceon(chessboard, Square(i)) == PIECE_WB
+            bw_count += 1
+        end
+    end
+    return bb_count, bw_count
+end
+
 function evaluate_board(chessboard)
     number_of_pieces = count_pieces(chessboard)
     if number_of_pieces < 12
@@ -237,12 +265,14 @@ function evaluate_board(chessboard)
         summe += piece_value(pieceon(chessboard, Square(square)), square, chessboard)
         i = square
     end
-    if double_pawns(chessboard) == true
-        summe += side == WHITE ? 3 : -3
+    if double_bishops(chessboard)[1] == 2
+        summe -= 30
+    elseif double_bishops(chessboard)[2] == 2
+        summe += 30
     end
     if endgame == true
        	if ischeck(chessboard)
-        	   summe += side == WHITE ? -100 : 100
+        	   summe += 100 
        	end
 
     end

@@ -2,7 +2,7 @@ using Chess, Chess.Book
 include("minmax.jl")
 
 function uciCommunication()
-    ENINGENAME = "strudlsjuliachessv0.1"
+    ENINGENAME = "strudlsjuliachessv0.5"
     AUTHOR = "strudl"
     board = startboard()
     
@@ -45,7 +45,6 @@ function uciCommunication()
                 end
             end
         elseif "go" in input
-	    # why is depth 4 better than 5!?
             move = calc_best_move(board, 4)
             if move != nothing
                 move = tostring(move)
