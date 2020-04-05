@@ -2,6 +2,7 @@ using Chess, Chess.Book
 include("eval.jl")
 stop = false
 checkmate = false
+stalemate = false
 nodes = 0
 function quiescence(alpha, beta, chessboard, color, maxdepth)
     all_moves = capture_moves(chessboard)
@@ -56,7 +57,7 @@ function calc_best_move(chessboard, depth)
 
     bookmove = nothing
 
-    bookmove = pickbookmove(chessboard, "openings/carlsennaka.obk", minscore = 0.01, mingamecount = 20)
+    bookmove = pickbookmove(chessboard, "/home/manuel/Dokumente/juliachess/openings/carlsennaka.obk", minscore = 0.01, mingamecount = 20)
     if bookmove !== nothing
         return bookmove
     end
@@ -95,7 +96,7 @@ function calc_best_move(chessboard, depth)
             
       	     end
        	end
-        println("info score cp ", best_value, " bestmove: ", movetosan(chessboard, best_move), " depth ", current_depth, " nodes ", nodes, " time ", (time_ns() - begin_time) * 1e-9, " nodes/second: ", nodes / ((time_ns() - begin_time) * 1e-9))
+        # println("info score cp ", best_value, " bestmove: ", movetosan(chessboard, best_move), " depth ", current_depth, " nodes ", nodes, " time ", (time_ns() - begin_time) * 1e-9, " nodes/second: ", nodes / ((time_ns() - begin_time) * 1e-9))
     end
     return best_move
 end
@@ -117,6 +118,7 @@ function negamax(depth, alpha, beta, chessboard, color)
     if ischeckmate(chessboard)
         global checkmate = true
     end
+        
     for move in leg
         u = domove!(chessboard, move)
         score = -negamax(depth - 1, -beta, -alpha, chessboard, -color)
