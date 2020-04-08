@@ -1,5 +1,8 @@
 using Chess, Chess.Book
+using Random
+include("pvtable.jl")
 
+MATE = 1e5
 const pawn_square_table = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [50, 50, 50, 50, 50, 50, 50, 50],
@@ -86,7 +89,7 @@ function double_pawns(chessboard)
     a = b = c = d = e = f = g = h = 0
     pwn = sidetomove(chessboard) == WHITE ? PIECE_WP : PIECE_BP
     db = false
-    prev_a = prev_b = prev_c = prev_d = prev_e = prev_f = prev_g = prev_h = 1e8
+    prev_a = prev_b = prev_c = prev_d = prev_e = prev_f = prev_g = prev_h = 0
     for i in range(2, stop = 7, step = 1)
 
             
@@ -183,7 +186,9 @@ function piece_value(piece, square,  chessboard)
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
-        score += 100  + pawn_square_table[row_white][column_white]   + double_pawns(chessboard)
+        if endgame == false
+            score += 100  + pawn_square_table[row_white][column_white]   + double_pawns(chessboard)
+        end
     end
     if piece == Piece(WHITE, KNIGHT)
         score += 350  + knight_square_table[row_white][column_white]
@@ -205,7 +210,9 @@ function piece_value(piece, square,  chessboard)
         end
     end
     if piece == Piece(BLACK, PAWN)
-        score += -100 - (pawn_square_table[row_black][column_black] ) - double_pawns(chessboard)
+        if endgame == false
+            score += -100 - (pawn_square_table[row_black][column_black] ) - double_pawns(chessboard)
+        end
     end
     if piece == Piece(BLACK, KNIGHT)
         score += -350 - (knight_square_table[row_black][column_black] )
@@ -255,12 +262,10 @@ function double_bishops(chessboard)
 end
 
 function evaluate_board(chessboard)
-    number_of_pieces = count_pieces(chessboard)
-    if number_of_pieces < 12
-       	global endgame = true
-    end
+    
+    
     summe = 0
-    side = sidetomove(chessboard)
+    side = sidetomove(chessboard) == WHITE ? 1 : -1
     for square in range(1, stop = 64, step = 1)
         summe += piece_value(pieceon(chessboard, Square(square)), square, chessboard)
         i = square
@@ -271,11 +276,22 @@ function evaluate_board(chessboard)
     if double_bishops(chessboard)[2] == 2
         summe += 30
     end
-    if endgame == true
-       	if ischeck(chessboard)
-        	   summe += 100 
-       	end
+    if ischeckmate(chessboard) && (summe * side)  > 0
 
+        summe += MATE * side;
+    elseif ischeckmate(chessboard) && (summe * side) < 0
+        summe -= MATE * side;
+    end
+    if endgame == true
+        if ischeck(chessboard) && (summe * side)  > 0
+            summe += 30 * side
+        end
+    end
+    if isdraw(chessboard) && (summe * side)  < 0
+
+        summe += 1e5 * side;
+    elseif isdraw(chessboard) && (summe * side) > 0
+        summe -= 1e5 * side;
     end
     return summe
 end
@@ -316,6 +332,16 @@ function capture_moves(chessboard)
     for move in all_moves
         u = domove!(chessboard, move)
         current = count_pieces(chessboard)
+        if ischeck(chessboard)
+            push!(capture_moves, move)
+            undomove!(chessboard, u)
+            continue
+        end
+        if ischeckmate(chessboard)
+            push!(capture_moves, move)
+            undomove!(chessboard, u)
+            continue
+        end
         if current != prev
             push!(capture_moves, move)
         end
@@ -325,5 +351,26 @@ function capture_moves(chessboard)
 
 end
 
+function rand32()
+    return floor((rand((0, 1)) * 255) + 1) << 23 | floor((rand((0, 1)) * 255) + 1) << 16 | floor((rand((0, 1)) * 255) + 1) << 8 | floor((rand((0, 1)) * 255) + 1)
+end
+
+function generate_key()
+    key = 0
+    piece1 = rand32()
+    piece2 = rand32()
+    piece3 = rand32()
+
+    key ⊻= piece1
+    key ⊻= piece2
+    key ⊻= piece3
+    println("Key 1: ", key)
+    key ⊻= piece1
+    println("Key1 out key:", key)
+    key = 0
+    key ⊻= piece2
+    key ⊻= piece3
+    println("no piece 1: ", key)
+end
 
 
