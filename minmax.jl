@@ -6,6 +6,7 @@ stalemate = false
 calculating = true
 begin_time = 0
 nodes = 0
+history = []
 
 
 function time_control()
@@ -81,7 +82,16 @@ function negamax(depth, alpha, beta, chessboard, color)
     if (nodes & 2047) == 0
         time_control()
     end
-
+    if ischeckmate(chessboard)
+        return -MATE
+    end
+    if isdraw(chessboard)
+        return  DRAW
+    end
+        
+    if ischeck(chessboard)
+        depth += 1
+    end
     bestmove = nothing
     oldaplha = alpha
     bestscore = -1e8
@@ -110,7 +120,7 @@ function negamax(depth, alpha, beta, chessboard, color)
             bestmove = move 
             
             if score >= beta
-                store_Pv_Move(chessboard, bestmove)
+                # store_Pv_Move(chessboard, bestmove)
                 return beta
             end     
             alpha = score
@@ -123,7 +133,7 @@ function negamax(depth, alpha, beta, chessboard, color)
         if ischeck(chessboard)
             return -MATE + depth
         else
-            return 0
+            return DRAW
         end
     end
     if alpha != oldaplha
@@ -178,6 +188,7 @@ function calc_best_move(chessboard, depth)
   
         
     end
+    push!(history, generate_pos_key(chessboard))
     return best_move
 end
 
