@@ -13,6 +13,7 @@ function uciCommunication()
         if "uci" in input
             Init_Pv_Table()
             InitHashKeys()
+            Init_search_history()
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")
@@ -51,16 +52,28 @@ function uciCommunication()
             end
         elseif "go" in input
             if "wtime" in input
+                
                 white_time_index = indexin(["wtime"], input)[1] + 1
-                global white_time = parse(Int, input[white_time_index])
+                global white_time = parse(Float64, input[white_time_index])
+                println(white_time)
                 global timecontrol = true
                 
             end
             if "btime" in input
                 black_time_index = indexin(["btime"], input)[1] + 1
-                global black_time = parse(Int, input[black_time_index])
+                global black_time = parse(Float64, input[black_time_index])
                 global timecontrol = true
                 
+            end
+            if "winc" in input
+                wincrementindex = indexin(["winc"], input)[1] + 1
+                global wincrement = parse(Float64, input[wincrementindex])
+                global white_time += wincrement
+            end
+            if "binc" in input
+                blackincrementindex = indexin(["binc"], input)[1] + 1
+                global blackincrement = parse(Float64, input[blackincrementindex])
+                global black_time += blackincrement
             end
             move = calc_best_move(board, 5)
             if move != nothing

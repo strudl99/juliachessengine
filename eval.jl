@@ -3,6 +3,7 @@ using Random
 include("pvtable.jl")
 
 MATE = 1e5
+DRAW = 0
 const pawn_square_table = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [50, 50, 50, 50, 50, 50, 50, 50],
@@ -276,12 +277,12 @@ function evaluate_board(chessboard)
     if double_bishops(chessboard)[2] == 2
         summe += 30
     end
-    if ischeckmate(chessboard) && (summe * side)  > 0
+#=     if ischeckmate(chessboard) && (summe * side)  > 0
 
         summe += MATE * side;
     elseif ischeckmate(chessboard) && (summe * side) < 0
         summe -= MATE * side;
-    end
+    end =#
     if endgame == true
         if ischeck(chessboard) && (summe * side)  > 0
             summe += 30 * side
@@ -352,7 +353,7 @@ function capture_moves(chessboard)
 end
 
 function rand32()
-    return floor((rand((0, 1)) * 255) + 1) << 23 | floor((rand((0, 1)) * 255) + 1) << 16 | floor((rand((0, 1)) * 255) + 1) << 8 | floor((rand((0, 1)) * 255) + 1)
+    return rand(UInt32, 1)[1]
 end
 
 function generate_key()
