@@ -4,6 +4,8 @@ include("pvtable.jl")
 
 MATE = 1e5
 DRAW = 0
+files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
+const pawn_passed = [0, 5, 10, 20, 35, 50, 100, 200]
 const pawn_square_table = [
     [0,  0,  0,  0,  0,  0,  0,  0],
     [50, 50, 50, 50, 50, 50, 50, 50],
@@ -88,95 +90,159 @@ end
 
 function double_pawns(chessboard)
     a = b = c = d = e = f = g = h = 0
+    temp = 2
     pwn = sidetomove(chessboard) == WHITE ? PIECE_WP : PIECE_BP
-    db = false
+    db_W = false
+    db_B = false
     prev_a = prev_b = prev_c = prev_d = prev_e = prev_f = prev_g = prev_h = 0
-    for i in range(2, stop = 7, step = 1)
+    for i in range(1, stop = 8, step = 1)
 
             
-        if pieceon(chessboard, FILE_A, rank(Square(i))) == pwn
-                
-            if prev_a == i - 1
-                db = true
-                break
-            end
-            prev_a = i
+        if pieceon(chessboard, FILE_A, rank(Square(i))) == PIECE_WP 
             a += 1
-                
-        end
-        if pieceon(chessboard, FILE_B, rank(Square(i))) == pwn
-            b += 1
-            if prev_b == i - 1
-                db = true
+            if a >= temp
+                db_W = true
                 break
             end
-            prev_b = i
-                
-        end
-        if pieceon(chessboard, FILE_C, rank(Square(i))) == pwn
-            c += 1
-            if prev_c == i - 1
-                db = true
-                break
-            end
-            prev_c = i
-                
-        end
-        if pieceon(chessboard, FILE_D, rank(Square(i))) == pwn
-            d += 1
-            if prev_d == i - 1
-                db = true
-                break
-            end
-            prev_d = i
-                
-        end
-        if pieceon(chessboard, FILE_E, rank(Square(i))) == pwn
-            e += 1
-            if prev_e == i - 1
-                db = true
-                break
-            end
-            prev_e = i
-                
-        end
-        if pieceon(chessboard, FILE_F, rank(Square(i))) == pwn
-            f += 1
-            if prev_f == i - 1
-                db = true
-                break
-            end
-            prev_f = i
-                
-        end
-        if pieceon(chessboard, FILE_G, rank(Square(i))) == pwn
-            g += 1
-            if prev_g == i - 1
-                db = true
-                break
-            end
-            prev_g = i
-                
-        end
-        if pieceon(chessboard, FILE_H, rank(Square(i))) == pwn
-            h += 1
-            if prev_h == i - 1
-                db = true
-                break
-            end
-            prev_h = i
-                
-        end
-        
-        
-    end
-    if db == true
-        return -10
-    else
-        return 0
-    end
 
-end
+            
+                
+        end
+        if pieceon(chessboard, FILE_B, rank(Square(i))) == PIECE_WP 
+            
+            b += 1
+            if b >=  temp
+                db_W = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_C, rank(Square(i))) == PIECE_WP 
+            if c >= temp
+                db_W = true
+                break
+            end
+                
+        end
+        if pieceon(chessboard, FILE_D, rank(Square(i))) == PIECE_WP 
+            d += 1
+            if d >=  temp
+                db_W = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_E, rank(Square(i))) == PIECE_WP
+            e += 1
+            if e >=  temp
+                db_W = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_F, rank(Square(i))) == PIECE_WP 
+            f += 1
+            if f >= temp
+                db_W = true
+                break
+            end
+ 
+                
+        end
+        if pieceon(chessboard, FILE_G, rank(Square(i))) == PIECE_WP 
+            if g >=  temp
+                db_W = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_H, rank(Square(i))) == PIECE_WP 
+            h += 1
+            if h >= temp
+                db_W = true
+                break
+            end
+                
+        end
+        if pieceon(chessboard, FILE_A, rank(Square(i))) == PIECE_BP
+            prev_a += 1
+            if prev_a >= temp
+                db_B = true
+                break
+            end
+
+            
+                
+        end
+        if pieceon(chessboard, FILE_B, rank(Square(i))) == PIECE_BP
+            prev_b += 1
+            if prev_b >=  temp
+                db_B = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_C, rank(Square(i))) == PIECE_BP
+            prev_c += 1
+            if prev_c >= temp
+                db_B = true
+                break
+            end
+                
+        end
+        if  pieceon(chessboard, FILE_D, rank(Square(i))) == PIECE_BP
+            prev_d += 1
+            if prev_d >=  temp
+                db_B = true
+                break
+            end
+
+                
+        end
+        if pieceon(chessboard, FILE_E, rank(Square(i))) == PIECE_BP
+            prev_e += 1
+            if prev_e >=  temp
+                db_B = true
+                break
+            end
+
+                
+        end
+        if  pieceon(chessboard, FILE_F, rank(Square(i))) == PIECE_BP
+            prev_f += 1
+            if prev_f >= temp
+                db_B = true
+                break
+            end
+ 
+                
+        end
+        if  pieceon(chessboard, FILE_G, rank(Square(i))) == PIECE_BP
+            prev_g += 1
+            if prev_g >=  temp
+                db_B = true
+                break
+            end
+
+                
+        end
+        if  pieceon(chessboard, FILE_H, rank(Square(i))) == PIECE_BP
+            prev_h += 1
+            if prev_h >= temp
+                db_B = true
+                break
+            end
+                
+        end
+    end
+  
+    return (db_W, db_B)
+end 
 
 # function that calculate the piece value of the board + the value of the square table 
 
@@ -188,7 +254,7 @@ function piece_value(piece, square,  chessboard)
     column_white = convert_square(square, true)[2]
     if piece == Piece(WHITE, PAWN)
         if endgame == false
-            score += 100  + pawn_square_table[row_white][column_white]   + double_pawns(chessboard)
+            score += 100  + pawn_square_table[row_white][column_white]
         end
     end
     if piece == Piece(WHITE, KNIGHT)
@@ -198,10 +264,10 @@ function piece_value(piece, square,  chessboard)
         score += 400  + bishop_square_table[row_white][column_white]
     end
     if piece == Piece(WHITE, ROOK)
-        score += 500 + rook_square_table[row_white][column_white]  + rook_open_file(chessboard)
+        score += 500 + rook_square_table[row_white][column_white] + rook_open_file(chessboard)[1]
     end
     if piece == Piece(WHITE, QUEEN)
-        score += 900  + queen_square_table[row_white][column_white]
+        score += 900  + queen_square_table[row_white][column_white] + queen_open_file(chessboard)[1]
     end
     if piece == Piece(WHITE, KING)
         if endgame == false
@@ -212,7 +278,7 @@ function piece_value(piece, square,  chessboard)
     end
     if piece == Piece(BLACK, PAWN)
         if endgame == false
-            score += -100 - (pawn_square_table[row_black][column_black] ) - double_pawns(chessboard)
+            score += -100 - (pawn_square_table[row_black][column_black] )
         end
     end
     if piece == Piece(BLACK, KNIGHT)
@@ -222,10 +288,10 @@ function piece_value(piece, square,  chessboard)
         score += -400 - (bishop_square_table[row_black][column_black] ) 
     end
     if piece == Piece(BLACK, ROOK)
-        score += -500 - (rook_square_table[row_black][column_black] )  - rook_open_file(chessboard)
+        score += -500 - (rook_square_table[row_black][column_black] ) - rook_open_file(chessboard)[2]
     end
     if piece == Piece(BLACK, QUEEN)
-        score += -900 - (queen_square_table[row_black][column_black])
+        score += -900 - (queen_square_table[row_black][column_black]) - queen_open_file(chessboard)[2]
     end
     if piece == Piece(BLACK, KING)
         if endgame == false
@@ -238,13 +304,48 @@ function piece_value(piece, square,  chessboard)
 
 end
 
-function rook_open_file(chessboard)
-    e = emptysquares(chessboard)
-    if e == SS_FILE_A || e == SS_FILE_B || e ==  SS_FILE_C || e == SS_FILE_D || e == SS_FILE_E || e == SS_FILE_F || e == SS_FILE_G || e == SS_FILE_H
-        return 10
-    else 
-        return 0
+function rook_open_file(b)
+    white = 0
+    black = 0
+    for i in files
+        if isempty(intersect(pawns(b, WHITE), i)) && !isempty(intersect(rooks(b, WHITE), i))
+            white = 5
+        end
+        if isempty(intersect(pawns(b, BLACK), i)) && !isempty(intersect(rooks(b, BLACK), i))
+            black = 5
+        end
+        if isempty(intersect(pawns(b), i)) && !isempty(intersect(rooks(b, BLACK), i))
+            black = 10
+        end
+        if isempty(intersect(pawns(b), i)) && !isempty(intersect(rooks(b, WHITE), i))
+            white = 10
+        end
     end
+
+        
+
+    return (white,black)
+end 
+
+function queen_open_file(b)
+    white = 0
+    black = 0
+    for i in files
+        if isempty(intersect(pawns(b, WHITE), i)) && !isempty(intersect(queens(b, WHITE), i))
+            white = 5
+        end
+        if isempty(intersect(pawns(b, BLACK), i)) && !isempty(intersect(queens(b, BLACK), i))
+            black = 5
+        end
+        if isempty(intersect(pawns(b), i)) && !isempty(intersect(queens(b, BLACK), i))
+            black = 10
+        end
+        if isempty(intersect(pawns(b), i)) && !isempty(intersect(queens(b, WHITE), i))
+            white = 10
+        end
+    end
+
+    return (white,black)
 end
 
 function double_bishops(chessboard)
@@ -277,22 +378,11 @@ function evaluate_board(chessboard)
     if double_bishops(chessboard)[2] == 2
         summe += 30
     end
-#=     if ischeckmate(chessboard) && (summe * side)  > 0
-
-        summe += MATE * side;
-    elseif ischeckmate(chessboard) && (summe * side) < 0
-        summe -= MATE * side;
-    end =#
-    if endgame == true
-        if ischeck(chessboard) && (summe * side)  > 0
-            summe += 30 * side
-        end
+    if double_pawns(chessboard)[1]
+        summe -= 10
     end
-    if isdraw(chessboard) && (summe * side)  < 0
-
-        summe += 1e5 * side;
-    elseif isdraw(chessboard) && (summe * side) > 0
-        summe -= 1e5 * side;
+    if double_pawns(chessboard)[2]
+        summe += 10
     end
     return summe
 end
@@ -352,6 +442,17 @@ function capture_moves(chessboard)
 
 end
 
+
+function big_piece(chessboard)
+    for i in 1:1:64
+        if pieceon(chessboard, Square(i)) != EMPTY && pieceon(chessboard, Square(i)) != PIECE_WP &&  pieceon(chessboard, Square(i)) != PIECE_BP  && pieceon(chessboard, Square(i)) != PIECE_WK &&  pieceon(chessboard, Square(i)) != PIECE_BK
+            return true
+        end
+    end
+return false
+end
+
+
 function rand32()
     return rand(UInt32, 1)[1]
 end
@@ -374,4 +475,13 @@ function generate_key()
     println("no piece 1: ", key)
 end
 
+
+function mirror(chessboard)
+    println("Befor mirror: ", evaluate_board(chessboard))
+    println("Hashkey: ", generate_pos_key(chessboard))
+    donullmove!(chessboard)
+    println("After mirror: ", evaluate_board(chessboard))
+    println("Hashkey: ", generate_pos_key(chessboard))
+    donullmove!(chessboard)
+end
 

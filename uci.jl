@@ -44,7 +44,7 @@ function uciCommunication()
                     n = length(input)
                     for index in i:n
                         move = string(input[index])
-                        println(move)
+                        # println(move)
                         domove!(board, move)
                     end
 
@@ -75,7 +75,7 @@ function uciCommunication()
                 global blackincrement = parse(Float64, input[blackincrementindex])
                 global black_time += blackincrement
             end
-            move = calc_best_move(board, 5)
+            move = calc_best_move(board, 8)
             if move != nothing
                 move = tostring(move)
             else
@@ -86,10 +86,10 @@ function uciCommunication()
             
         end
        	if "stop" in input
-       	    break
+       	    exit(1)
        	end
         if "quit" in input
-            break
+            exit(1)
         end
     end
 end
