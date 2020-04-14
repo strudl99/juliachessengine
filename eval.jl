@@ -1,21 +1,25 @@
 using Chess, Chess.Book
 using Random
-include("pvtable.jl")
+include("movegen.jl")
 
 MATE = 1e5
 DRAW = 0
 files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
+ranks = [SS_RANK_1, SS_RANK_2, SS_RANK_3, SS_RANK_4, SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8]
+black_passed_mask = []
+white_passed_mask = []
+isolated_passed_mask = zeros(UInt, 64)
 const pawn_passed = [0, 5, 10, 20, 35, 50, 100, 200]
 const pawn_square_table = [
-    [0,  0,  0,  0,  0,  0,  0,  0],
-    [50, 50, 50, 50, 50, 50, 50, 50],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [5, 10, 10, -20, -20, 10, 10, 5],
+    [5, -5, -10, 0, 0, -10, -5, 5],
+    [0, 0, 0, 20, 20, 0, 0, 0],
+    [5, 5, 10, 25, 25, 10, 5, 5],
     [10, 10, 20, 30, 30, 20, 10, 10],
-    [5,  5, 10, 25, 25, 10,  5,  5],
-    [ 0,  0,  0, 20, 20,  0,  0,  0],
-     [5, -5,-10,  0,  0,-10, -5,  5],
-     [5, 10, 10,-20,-20, 10, 10,  5],
-     [0,  0,  0,  0,  0,  0,  0,  0]
-     ]
+    [50, 50, 50, 50, 50, 50, 50, 50],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+]
 
 const knight_square_table = [
 [-50,-40,-30,-30,-30,-30,-40,-50],
@@ -81,14 +85,29 @@ const king_endgame_square_table = [
 [-50,-30,-30,-30,-30,-30,-30,-50]]
 
 endgame = false
-function convert_square(square, is_white)
+
+
+function convert_square(square::Int, is_white::Bool)
     square -= 1
     row = !is_white ? 7 - (square ÷ 8) : square ÷ 8
     column = square % 8 
     return (row + 1, column + 1)
 end
 
-function double_pawns(chessboard)
+function init_eval_masks()
+    for i in 1:1:64
+        push!(white_passed_mask, SS_EMPTY)
+        push!(black_passed_mask, SS_EMPTY)
+    end
+
+     #=    tsq = i - 7
+        while tsq > 0
+            black_passed_mask[i] |= (1 << tsq)
+            tsq -= 1
+        end =#
+    # end
+end
+#= function double_pawns(chessboard)
     a = b = c = d = e = f = g = h = 0
     temp = 2
     pwn = sidetomove(chessboard) == WHITE ? PIECE_WP : PIECE_BP
@@ -242,58 +261,58 @@ function double_pawns(chessboard)
     end
   
     return (db_W, db_B)
-end 
+end =#
 
 # function that calculate the piece value of the board + the value of the square table 
-
+#= 
 function piece_value(piece, square,  chessboard)
     score = 0
     row_black = convert_square(square, false)[1]
     column_black = convert_square(square, false)[2]
     row_white = convert_square(square, true)[1]
     column_white = convert_square(square, true)[2]
-    if piece == Piece(WHITE, PAWN)
+    if piece == PIECE_WP
         if endgame == false
             score += 100  + pawn_square_table[row_white][column_white]
         end
     end
-    if piece == Piece(WHITE, KNIGHT)
-        score += 350  + knight_square_table[row_white][column_white]
+    if piece == PIECE_WN
+        score += 320  + knight_square_table[row_white][column_white]
     end
-    if piece == Piece(WHITE, BISHOP)
-        score += 400  + bishop_square_table[row_white][column_white]
+    if piece == PIECE_WB
+        score += 330  + bishop_square_table[row_white][column_white]
     end
-    if piece == Piece(WHITE, ROOK)
+    if piece == PIECE_WR
         score += 500 + rook_square_table[row_white][column_white] + rook_open_file(chessboard)[1]
     end
-    if piece == Piece(WHITE, QUEEN)
+    if piece == PIECE_WQ
         score += 900  + queen_square_table[row_white][column_white] + queen_open_file(chessboard)[1]
     end
-    if piece == Piece(WHITE, KING)
+    if piece == PIECE_WK
         if endgame == false
             score += 10000 + king_square_table[row_white][column_white]
         else
             score += 10000  + (king_endgame_square_table[row_white][column_white])
         end
     end
-    if piece == Piece(BLACK, PAWN)
+    if piece == PIECE_BP
         if endgame == false
             score += -100 - (pawn_square_table[row_black][column_black] )
         end
     end
-    if piece == Piece(BLACK, KNIGHT)
-        score += -350 - (knight_square_table[row_black][column_black] )
+    if piece == PIECE_BN
+        score += -320 - (knight_square_table[row_black][column_black] )
     end
-    if piece == Piece(BLACK, BISHOP)
-        score += -400 - (bishop_square_table[row_black][column_black] ) 
+    if piece == PIECE_BB
+        score += -330 - (bishop_square_table[row_black][column_black] ) 
     end
-    if piece == Piece(BLACK, ROOK)
+    if piece == PIECE_BR
         score += -500 - (rook_square_table[row_black][column_black] ) - rook_open_file(chessboard)[2]
     end
-    if piece == Piece(BLACK, QUEEN)
+    if piece == PIECE_BQ
         score += -900 - (queen_square_table[row_black][column_black]) - queen_open_file(chessboard)[2]
     end
-    if piece == Piece(BLACK, KING)
+    if piece == PIECE_BK
         if endgame == false
             score += -10000  - (king_square_table[row_black][column_black])
         else 
@@ -302,9 +321,102 @@ function piece_value(piece, square,  chessboard)
     end
     return score
 
+end =#
+all = 0
+p = 0
+
+function piece_value(b::Board)::Int
+    score = 0
+
+    global p += 1
+    wpawn_squares = squares(pawns(b, WHITE))
+    for i in 1:1:length(wpawn_squares)
+        row_white = convert_square(wpawn_squares[i].val, true)[1]
+        column_white = convert_square(wpawn_squares[i].val, true)[2]
+        score += 100  + pawn_square_table[row_white][column_white]
+    end
+    wknights_squares = squares(knights(b, WHITE))
+    for i in 1:1:length(wknights_squares)
+        row_white = convert_square(wknights_squares[i].val, true)[1]
+        column_white = convert_square(wknights_squares[i].val, true)[2]
+        score += 320  + knight_square_table[row_white][column_white]
+    end
+    wbishops_squares = squares(bishops(b, WHITE))
+    for i in 1:1:length(wbishops_squares)
+        row_white = convert_square(wbishops_squares[i].val, true)[1]
+        column_white = convert_square(wbishops_squares[i].val, true)[2]
+        score += 330  + bishop_square_table[row_white][column_white]
+    end
+    wrook_squares = squares(rooks(b, WHITE))
+    for i in 1:1:length(wrook_squares)
+        row_white = convert_square(wrook_squares[i].val, true)[1]
+        column_white = convert_square(wrook_squares[i].val, true)[2]
+        score += 500 + rook_square_table[row_white][column_white] + rook_open_file(b)[1]
+    end
+    wqueen_squares = squares(queens(b, WHITE))
+    for i in 1:1:length(wqueen_squares)
+        row_white = convert_square(wqueen_squares[i].val, true)[1]
+        column_white = convert_square(wqueen_squares[i].val, true)[2]
+        score += 900  + queen_square_table[row_white][column_white] + queen_open_file(b)[1]
+    end
+    wkings_squares = squares(kings(b, WHITE))
+    for i in 1:1:length(wkings_squares)
+        row_white = convert_square(wkings_squares[i].val, true)[1]
+        column_white = convert_square(wkings_squares[i].val, true)[2]
+        if endgame == false
+            score += 10000  + (king_square_table[row_white][column_white])
+        else 
+            score += 10000  + (king_endgame_square_table[row_white][row_white])
+        end
+    end
+    if score <= 11360
+        global endgame = true
+    end
+    bpawn_squares = squares(pawns(b, BLACK))
+    for i in 1:1:length(bpawn_squares)
+        row_white = convert_square(bpawn_squares[i].val, false)[1]
+        column_white = convert_square(bpawn_squares[i].val, false)[2]
+        score -= 100  + pawn_square_table[row_white][column_white]
+    end
+    bknights_squares = squares(knights(b, BLACK))
+    for i in 1:1:length(bknights_squares)
+        row_white = convert_square(bknights_squares[i].val, false)[1]
+        column_white = convert_square(bknights_squares[i].val, false)[2]
+        score -= 320  + knight_square_table[row_white][column_white]
+    end
+    bbishops_squares = squares(bishops(b, BLACK))
+    for i in 1:1:length(bbishops_squares)
+        row_white = convert_square(bbishops_squares[i].val, false)[1]
+        column_white = convert_square(bbishops_squares[i].val, false)[2]
+        score -= 330  + bishop_square_table[row_white][column_white]
+    end
+    brook_squares = squares(rooks(b, BLACK))
+    for i in 1:1:length(brook_squares)
+        row_white = convert_square(brook_squares[i].val, false)[1]
+        column_white = convert_square(brook_squares[i].val, false)[2]
+        score -= 500 + rook_square_table[row_white][column_white] + rook_open_file(b)[1]
+    end
+    bqueen_squares = squares(queens(b, BLACK))
+    for i in 1:1:length(bqueen_squares)
+        row_white = convert_square(bqueen_squares[i].val, false)[1]
+        column_white = convert_square(bqueen_squares[i].val, false)[2]
+        score -= 900  + queen_square_table[row_white][column_white] + queen_open_file(b)[1]
+    end
+    bkings_squares = squares(kings(b, BLACK))
+    for i in 1:1:length(bkings_squares)
+        row_black = convert_square(bkings_squares[i].val, false)[1]
+        column_black = convert_square(bkings_squares[i].val, false)[2]
+        if endgame == false
+            score -= 10000  + (king_square_table[row_black][column_black])
+        else 
+            score -= 10000  + (king_endgame_square_table[row_black][column_black])
+        end
+    end
+    return score
+
 end
 
-function rook_open_file(b)
+function rook_open_file(b::Board)
     white = 0
     black = 0
     for i in files
@@ -324,10 +436,10 @@ function rook_open_file(b)
 
         
 
-    return (white,black)
+    return (white, black)
 end 
 
-function queen_open_file(b)
+function queen_open_file(b::Board)
     white = 0
     black = 0
     for i in files
@@ -345,10 +457,10 @@ function queen_open_file(b)
         end
     end
 
-    return (white,black)
+    return (white, black)
 end
 
-function double_bishops(chessboard)
+function double_bishops(chessboard::Board)
     bb_count = 0
     bw_count = 0
     sum = 0
@@ -363,117 +475,37 @@ function double_bishops(chessboard)
     return bb_count, bw_count
 end
 
-function evaluate_board(chessboard)
+function evaluate_board(chessboard::Board)::Int
     
     
     summe = 0
     side = sidetomove(chessboard) == WHITE ? 1 : -1
-    for square in range(1, stop = 64, step = 1)
-        summe += piece_value(pieceon(chessboard, Square(square)), square, chessboard)
-        i = square
-    end
+
+    summe += piece_value(chessboard)
     if double_bishops(chessboard)[1] == 2
         summe -= 30
     end
     if double_bishops(chessboard)[2] == 2
         summe += 30
     end
-    if double_pawns(chessboard)[1]
+ #=    if double_pawns(chessboard)[1]
         summe -= 10
     end
     if double_pawns(chessboard)[2]
         summe += 10
-    end
+    end =#
     return summe
 end
 
-function sort_moves(chessboard)
-
-    all_moves = moves(chessboard)
-    isort = []
-    r = false
-    if sidetomove(chessboard) == WHITE
-        r = false
-    else
-        r = true
-    end
-    for move in all_moves
-        u = domove!(chessboard, move)
-        push!(isort, (evaluate_board(chessboard), move))
-        undomove!(chessboard, u)
-    end
-    all_moves = last.(sort!(isort, lt = (x, y)->(x[1] > y[1]), rev = r))
-    return all_moves
-end
-
-function count_pieces(chessboard)
-    piece_count_prev = 0
-    for square in range(1, stop = 64, step = 1)
-        if pieceon(chessboard, Square(square)) != EMPTY
-            piece_count_prev += 1
-        end
-    end
-    return piece_count_prev
-end
-
-function capture_moves(chessboard)
-    capture_moves = []
-    prev = count_pieces(chessboard)
-    all_moves = moves(chessboard)
-    for move in all_moves
-        u = domove!(chessboard, move)
-        current = count_pieces(chessboard)
-        if ischeck(chessboard)
-            push!(capture_moves, move)
-            undomove!(chessboard, u)
-            continue
-        end
-        if ischeckmate(chessboard)
-            push!(capture_moves, move)
-            undomove!(chessboard, u)
-            continue
-        end
-        if current != prev
-            push!(capture_moves, move)
-        end
-        undomove!(chessboard, u)
-    end
-    return capture_moves
-
-end
-
-
-function big_piece(chessboard)
+function big_piece(chessboard)::Bool
     for i in 1:1:64
         if pieceon(chessboard, Square(i)) != EMPTY && pieceon(chessboard, Square(i)) != PIECE_WP &&  pieceon(chessboard, Square(i)) != PIECE_BP  && pieceon(chessboard, Square(i)) != PIECE_WK &&  pieceon(chessboard, Square(i)) != PIECE_BK
             return true
         end
     end
-return false
+    return false
 end
 
-
-function rand32()
-    return rand(UInt32, 1)[1]
-end
-
-function generate_key()
-    key = 0
-    piece1 = rand32()
-    piece2 = rand32()
-    piece3 = rand32()
-
-    key ⊻= piece1
-    key ⊻= piece2
-    key ⊻= piece3
-    println("Key 1: ", key)
-    key ⊻= piece1
-    println("Key1 out key:", key)
-    key = 0
-    key ⊻= piece2
-    key ⊻= piece3
-    println("no piece 1: ", key)
-end
 
 
 function mirror(chessboard)

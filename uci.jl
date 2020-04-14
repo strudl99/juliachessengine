@@ -14,6 +14,8 @@ function uciCommunication()
             Init_Pv_Table()
             InitHashKeys()
             Init_search_history()
+            init_mvvlva()
+            init_eval_masks()
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")
@@ -30,7 +32,7 @@ function uciCommunication()
                     n = length(input)
                     for index in i:n
                         move = string(input[index])
-                        println(move)
+                        # println(move)
                         domove!(board, move)
                     end
 
@@ -38,7 +40,15 @@ function uciCommunication()
             
             elseif "fen" in input
                 i = indexin(["fen"], input)[1]
-                board = fromfen(string(input[i + 1]))
+                string1 = string(input[i + 1])
+                string2 = string(input[i + 2])
+                string3 = string(input[i + 3])
+                string4 = string(input[i + 4])
+                string5 = string(input[i + 5])
+                string6 = string(input[i + 6])
+                println(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6)
+                board = fromfen(string(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6))
+                
                 if "moves" in input
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
@@ -55,7 +65,6 @@ function uciCommunication()
                 
                 white_time_index = indexin(["wtime"], input)[1] + 1
                 global white_time = parse(Float64, input[white_time_index])
-                println(white_time)
                 global timecontrol = true
                 
             end
@@ -82,7 +91,6 @@ function uciCommunication()
                 move = tostring(moves(board)[1])
             end
             println("bestmove ", move)
-            println(board)
             
         end
        	if "stop" in input

@@ -6,10 +6,14 @@ stalemate = false
 calculating = true
 begin_time = 0
 nodes = 0
+killers = 0
 history = []
+killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0)]
 nullcut = 0
 ply = 0
-
+pvmovecut = 0
+leg = MoveList(200)
+# pv_move = nothing
 function time_control()
 
     if ((time_ns() - begin_time) * 1e-6) > playtime && timecontrol == true
@@ -18,8 +22,25 @@ function time_control()
     end
 end
 
+function pick_next_move(move_num, movelist)
+    temp = MOVE_NULL
+    best_score = 0
+    index = 1
+    for i in move_num:1:length(movelist)
+        if movelist[i][2] > best_score
+            best_score = movelist[i][2]
+            index = i
+        end
+    end
+
+    temp = movelist[move_num]
+    movelist[move_num] = movelist[index]
+    movelist[index] = temp
+    return movelist
+end
+
 function quiescence(alpha, beta, chessboard, color, maxdepth)
-    all_moves = capture_moves(chessboard)
+    all_moves = only_capture_moves(chessboard)
     score = evaluate_board(chessboard) * color
    #=  if ischeckmate(chessboard)
 
@@ -43,7 +64,8 @@ function quiescence(alpha, beta, chessboard, color, maxdepth)
         alpha = score
     end
     if maxdepth >= 0
-        for move in all_moves
+        for i in 1:1:length(all_moves)
+            all_moves = pick_next_move(i, all_moves)
             if calculating == false
                 break
             end
@@ -55,16 +77,19 @@ function quiescence(alpha, beta, chessboard, color, maxdepth)
                     score = -1e5
             
                 end =#
-                
-            u = domove!(chessboard, move)
+  
+            u = domove!(chessboard, all_moves[i][1])
             global ply += 1
             score = -quiescence(-beta, -alpha, chessboard, -color, maxdepth - 1)
             undomove!(chessboard, u)
+  
             global ply -= 1
             if score > alpha
-                bestmove = move 
+                bestmove = all_moves[i][1]
                 if score >= beta
-                    return beta
+
+                   
+                    return score
                 end
                     
                 alpha = score
@@ -105,9 +130,7 @@ info score cp 30 currmove: Qd2 depth 4 nodes 8615 time 0.37144631 pv d4d2 c8e6 c
 info score cp 85 currmove: Bb5 depth 5 nodes 29261 time 1.227512694 pv f1b5 a7a6 b5a4 c8d7 a4c6 
  nullcuts 39 hashcut 355 hashtablehit 499
 info score cp 40 currmove: Qd5 depth 6 nodes 229035 time 9.122102363 pv d4d5 f8e7 d5h5 g7g6 a4c6 
- nullcuts 177 hashcut 3849 hashtablehit 5313
-
-=#
+ nullcuts 177 hashcut 3849 hashtablehit 5313 =#
 function negamax(depth, alpha, beta, chessboard, color, nullmove)
     if depth <= 0
         # return evaluate_board(chessboard) * color
@@ -120,32 +143,28 @@ function negamax(depth, alpha, beta, chessboard, color, nullmove)
         time_control()
     end
    
-    if ischeckmate(chessboard)
-        return -MATE
-    end
-    if isdraw(chessboard)
-        return  DRAW
-    end
         
     if ischeck(chessboard)
         depth += 1
     end
-    bestmove = nothing
-    oldaplha = alpha
-    bestscore = -1e8
     score = -1e8
-    hashbool, hashscore = probe_hash_entry(chessboard, score, alpha, beta, depth)
+    pv_move = nothing
+    hashbool,  hashscore, pv_move = probe_hash_entry(chessboard, score, alpha, beta, depth)
     if hashbool
         global hashcut += 1
         return hashscore
     end
-
+    
     if nullmove && !ischeck(chessboard) && ply > 0 && big_piece(chessboard) && depth >= 4
+        u = 0
+
         u = donullmove!(chessboard)
+  
         global ply += 1
-        score = -negamax(depth-4, -beta, -beta +1, chessboard, -color, false)
+        score = -negamax(depth - 4, -beta, -beta + 1, chessboard, -color, false)
         undomove!(chessboard, u)
-        global ply -=1
+        
+        global ply -= 1
         if calculating == false && timecontrol == true
             return 0
         end
@@ -154,38 +173,59 @@ function negamax(depth, alpha, beta, chessboard, color, nullmove)
             return beta
         end
     end
-    
-    leg = sort_moves(chessboard)
-    
-   
-
-    if endgame == false
-        if depth <= 2
-            if length(leg) > 10
-                leg = leg[1:10]
+    bestmove = nothing
+    oldaplha = alpha
+    bestscore = -1e8
+    leg = generate_moves(chessboard)
+    if pv_move !== nothing && pv_move != MOVE_NULL
+        global pvmovecut += 1
+        for i in 1:1:length(leg)
+            if leg[i][1] == pv_move 
+                global killers += 1
+                leg[i] = (leg[i][1], 2000000)
+                break
             end
         end
     end 
+
+    
+
+   #=  if depth <= 2
+        if length(leg) > 20
+            leg = leg[1:20]
+        end
+    end =#
    
-    for move in leg
+    for i in 1:1:length(leg)
+        pick_next_move(i, leg)
+        u = 0
         global checkmate = false
         if calculating == false && timecontrol == true
             break
         end
-        u = domove!(chessboard, move)
+  
+        u = domove!(chessboard, leg[i][1])
+
+
         global ply += 1
         score = -negamax(depth - 1, -beta, -alpha, chessboard, -color, true)
-
         undomove!(chessboard, u)
         global ply -= 1
+        
         if score > bestscore
             bestscore = score
+            bestmove = leg[i][1]
             if score > alpha       
-                bestmove = move 
-                
                 if score >= beta
+                    
+                    if leg[i][2] == 0
+                        
+                        global killer_moves[2] = killer_moves[1]
+                        global killer_moves[1] = leg[i]
+                        
+                    end
                     store_Pv_Move(chessboard, bestmove, beta, "HFBETA", depth)
-                    return beta
+                    return score
                 end     
                 alpha = score
             end
@@ -193,6 +233,15 @@ function negamax(depth, alpha, beta, chessboard, color, nullmove)
         
         
     end
+
+    if length(leg) == 0
+        if ischeck(chessboard)
+            return -MATE
+        else
+            return DRAW
+        end
+    end
+
     if alpha != oldaplha
         store_Pv_Move(chessboard, bestmove, bestscore, "HEXACT", depth)
     else
@@ -219,21 +268,17 @@ function calc_best_move(chessboard, depth)
     prev_move = nothing
     best_move = nothing
     number_of_pieces = count_pieces(chessboard)
-    if number_of_pieces < 10
-        global endgame = true
-    end
     if endgame == true
         max_death += 1
     end
     while current_depth < max_death
-        #global nullcut = 0
+        # global nullcut = 0
         global nodes = 0
+        global nullcut = 0
         global begin_time = time_ns()
-
-	
+        global hashcut = 0
+        global killers = 0
         current_depth += 1
-        
-
         value = negamax(current_depth, -1e8, 1e8, chessboard, side == WHITE ? 1 : -1, true)
         if calculating == false
             break
@@ -241,7 +286,9 @@ function calc_best_move(chessboard, depth)
         best_move = probe_Pv_Table(chessboard)
         get_history(current_depth, chessboard)
         pv = [search_history[i] for i in 1:1:current_depth]
-        print("info score cp ", value, " currmove: ", movetosan(chessboard, best_move), " depth ", current_depth, " nodes ", nodes ,  " time ", (time_ns() - begin_time) * 1e-9, " pv ")
+
+        print("info score cp ", value, " currmove: ", movetosan(chessboard, best_move), " depth ", current_depth, " nodes ", nodes,  " time ", (time_ns() - begin_time) * 1e-9, " pv ")
+      
         for i in 1:1:current_depth
             if pv[i] != MOVE_NULL
                 
@@ -251,7 +298,7 @@ function calc_best_move(chessboard, depth)
             end
         end
         print("\n")
-        println(" nullcuts ", nullcut, " hashcut ", hashcut, " hashtablehit ", hashtablehit)
+        println(" nullcuts ", nullcut, " hashcut ", hashcut, " hashtablehit ", hashtablehit, " overrides ", over_write, " new writes ", new_write, " killers ", killers, " pvmovecut ", pvmovecut)
   
         
     end

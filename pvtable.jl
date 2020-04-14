@@ -8,7 +8,31 @@ new_write = 0
 over_write = 0
 hashtablehit = 0
 hashcut = 0
-PVSIZE = 0x10000
+PVSIZE = 0x10000 * 15 
+
+function rand32()
+    return rand(UInt32, 1)[1]
+end
+
+function generate_key()
+    key = 0
+    piece1 = rand32()
+    piece2 = rand32()
+    piece3 = rand32()
+
+    key ⊻= piece1
+    key ⊻= piece2
+    key ⊻= piece3
+    println("Key 1: ", key)
+    key ⊻= piece1
+    println("Key1 out key:", key)
+    key = 0
+    key ⊻= piece2
+    key ⊻= piece3
+    println("no piece 1: ", key)
+end
+
+
 function InitHashKeys()
     for i in 1:1:12
         push!(pieceKeys, rand32())
@@ -137,30 +161,33 @@ end
 function probe_hash_entry(chessboard, score, alpha, beta, depth)
     gameboard_key = generate_pos_key(chessboard)
     index = (gameboard_key % PVSIZE) + 1
+    move = nothing
     if gameboard_key in pv_table[index]["posKey"]
+        move = pv_table[index]["move"]
         if pv_table[index]["depth"] >= depth
+            
             global hashtablehit += 1
-            @assert pv_table[index]["depth"] >= 1
+            @assert pv_table[index]["depth"] > 0
             score = pv_table[index]["score"]
             if pv_table[index]["flags"] == "HFALPHA" && score <= alpha
                 score = alpha
-                return true, score
+                return true, score, move
             elseif pv_table[index]["flags"] == "HFBETA" && score >= beta
                 score = beta
-                return true, score
+                return true, score, move
             elseif pv_table[index]["flags"] == "HFEXACT"
-                return true, score
+                return true, score, move
             end
 
         end
     end
-    return false, 0
+    return false, 0, move
 end
 
 function clearPvTable()
     for i in  1:1:PVSIZE
-        #pv_table[i]["posKey"] = 0
-        #pv_table[i]["move"] = MOVE_NULL::Move
+        # pv_table[i]["posKey"] = 0
+        # pv_table[i]["move"] = MOVE_NULL::Move
         pv_table[i]["score"] = 0
         pv_table[i]["flags"] = 0
         pv_table[i]["depth"] = 0
