@@ -1,21 +1,18 @@
 using Chess, Chess.Book
+include("init.jl")
 include("minmax.jl")
 white_time = 0
 black_time = 0
-timecontrol = false
+
 function uciCommunication()
-    ENINGENAME = "strudlsjuliachessv0.5"
+    ENINGENAME = "strudlsjuliachessv0.7"
     AUTHOR = "strudl"
     board = startboard()
-    
+    key,  pv = init()
     while true
         input = split(readline())
         if "uci" in input
-            Init_Pv_Table()
-            InitHashKeys()
-            Init_search_history()
-            init_mvvlva()
-            init_eval_masks()
+            
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")
@@ -84,7 +81,8 @@ function uciCommunication()
                 global blackincrement = parse(Float64, input[blackincrementindex])
                 global black_time += blackincrement
             end
-            move = calc_best_move(board, 8)
+            posKey = generate_pos_key(board, key)
+            move =  calc_best_move(board, 12, pv, key, posKey)
             if move != nothing
                 move = tostring(move)
             else

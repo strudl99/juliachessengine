@@ -3,16 +3,9 @@ include("pvtable.jl")
 # MvvLVA move sort
 piece_list = [PIECE_WP, PIECE_WN, PIECE_WB, PIECE_WR, PIECE_WQ, PIECE_WK,PIECE_BP, PIECE_BN, PIECE_BB, PIECE_BR, PIECE_BQ, PIECE_BK]
 victim_scores = [100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600, 0]
-mvvlva_scores = zeros(12, 12)
-function init_mvvlva()
-    for (i, attacker) in enumerate(piece_list)
-        for (j, victim) in enumerate(piece_list)
-            if attacker == piece_list[i] && victim == piece_list[j]
-                mvvlva_scores[i, j] = victim_scores[i] + 6 - (victim_scores[j] / 100)
-            end
-        end
-    end
-end
+
+
+
 function count_pieces(chessboard)
     piece_count_prev = 0
     for square in range(1, stop = 64, step = 1)
@@ -23,21 +16,21 @@ function count_pieces(chessboard)
     return piece_count_prev
 end
 
-function capture_moves(chessboard::Board, all_moves)
+function capture_moves(chessboard::Board, all_moves, pv::Pv)::Array
     # println(all_moves)
     for (i, move) in enumerate(first.(all_moves))
         moveto = pieceon(chessboard, to(move))
         if moveto != EMPTY
             if sidetomove(chessboard) == WHITE
-                all_moves[i] = (move, 1000000 + mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6]) 
+                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6]) 
             else
-                all_moves[i] = (move, 1000000 + mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val])
+                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val])
             end
         end
-        if killer_moves[1] == (move, 0)
+        if pv.killer_moves[1] == (move, 0)
             # println("KILLER")
             all_moves[i] = (move, 900000)
-        elseif killer_moves[2] == (move, 0)
+        elseif pv.killer_moves[2] == (move, 0)
             all_moves[i] = (move, 800000)
         end
     end
@@ -45,32 +38,50 @@ function capture_moves(chessboard::Board, all_moves)
     return all_moves
 end
 
-function only_capture_moves(chessboard::Board)
-
+function only_capture_moves(chessboard::Board, pv::Pv)
+    counter = 1
     all_moves = moves(chessboard)
-    capture_moves = tuple.(MoveList(20), 0)
-    for move in all_moves
+    capture_moves_list = Array{Tuple}(undef, 1)
+    for (i, move) in enumerate(all_moves)
         moveto = pieceon(chessboard, to(move))
         if moveto != EMPTY
             if sidetomove(chessboard) == WHITE
-                push!(capture_moves, (move, 1000000 + mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6])) 
+                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6])) 
+                counter += 1
             else
-                push!(capture_moves, (move, 1000000 + mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val]))
+                
+                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val]))
+                counter += 1
             end        
         end
        
     end
     
     recycle!(all_moves)
-    return capture_moves
+    return capture_moves_list
 end
-function generate_moves(chessboard::Board)
+function generate_moves(chessboard::Board, pv::Pv)
     temp_move = MOVE_NULL
     unsorted_moves = moves(chessboard)
     # println(unsorted_moves)
     all_moves = tuple.(unsorted_moves, 0) 
-    cap = capture_moves(chessboard, all_moves)
+    cap = capture_moves(chessboard, all_moves, pv)
     recycle!(unsorted_moves)
     return cap
 end
+p = Dict("nodes" => 0)
+function perft_strudl(b, depth)
+    
+    if depth == 0
+        # println(nodes)
+        return
+    end
+    all_moves = generate_moves(b)
+    
+    for i = 1:1:length(generate_moves(b))
+        u = domove!(b, all_moves[i][1])
+        perft_strudl(b, depth - 1)
+        undomove!(b, u)
+    end
 
+end

@@ -1,5 +1,5 @@
 
-
+include("minmax.jl")
 # function to play game against itself
 
 function play_game()
@@ -7,6 +7,7 @@ function play_game()
     player = readline()
     println(player)
     g = Game()
+    key,  pv = init()
     isplayerblack = false
     if(player == "b")
         isplayerblack = true
@@ -17,9 +18,10 @@ function play_game()
     while !isterminal(g)
         b = board(g)
         if sidetomove(b) == WHITE
+            
             number_moves += 1
             if isplayerblack == true
-                move = calc_best_move(b, 5, true, number_moves)
+                move = calc_best_move(b, 5, pv, key)
                 move =  movetosan(b, move)
             else
                 print("Move: ")
@@ -34,12 +36,18 @@ function play_game()
                     break
                 end
             end
-            print("bestmove ", move)
+            println("Repetition: ", repetition(b, key, pv))
+            pushfirst!(pv.repetition, generate_pos_key(b, key))
+            
+            println("bestmove ", move)
+            
             domove!(g, move)  
         else
             if isplayerblack == false
-                move = calc_best_move(b, 5, false, number_moves)
-                move = movetosan(b, move)
+                #move = calc_best_move(b, 5, pv, key)
+                #move = movetosan(b, move)
+                print("Move: ")
+                move = readline()
             else
                 print("Move: ")
                 move = readline()
@@ -53,7 +61,7 @@ function play_game()
                     break
                 end
             end
-            print("bestmove ", move, " ")
+            println("bestmove ", move, " ")
             domove!(g, move)
         end
     end
