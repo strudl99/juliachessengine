@@ -93,6 +93,7 @@ function convert_square(square::Int, is_white::Bool)::Tuple
 end
 
 function piece_value(b::Board)::Int
+
     score = 0::Int
     endgame = false
     # global p += 1::Int
@@ -100,7 +101,7 @@ function piece_value(b::Board)::Int
     @inbounds for i in 1:1:length(wpawn_squares)
         row_white = convert_square(wpawn_squares[i].val, true)[1]::Int
         column_white = convert_square(wpawn_squares[i].val, true)[2]::Int
-        score += 100  + pawn_square_table[row_white][column_white]::Int - isolated_pawn(b)[1]
+        score += 100  + pawn_square_table[row_white][column_white]::Int # - isolated_pawn(b)[1]
     end
     wknights_squares = squares(knights(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wknights_squares)
@@ -143,7 +144,7 @@ function piece_value(b::Board)::Int
     @inbounds for i in 1:1:length(bpawn_squares)
         row_white = convert_square(bpawn_squares[i].val, false)[1]::Int
         column_white = convert_square(bpawn_squares[i].val, false)[2]::Int
-        score -= 100  + pawn_square_table[row_white][column_white]::Int + isolated_pawn(b)[2]
+        score -= 100  + pawn_square_table[row_white][column_white]::Int #+ isolated_pawn(b)[2]
     end
     bknights_squares = squares(knights(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(bknights_squares)
@@ -276,12 +277,6 @@ function evaluate_board(chessboard::Board)::Int
     if double_bishops(chessboard)[2] == 2
         summe += 30
     end
- #=    if double_pawns(chessboard)[1]
-        summe -= 10
-    end
-    if double_pawns(chessboard)[2]
-        summe += 10
-    end =#
     return summe
 end
 
@@ -296,10 +291,10 @@ end
 
 function mirror(chessboard)
     println("Befor mirror: ", evaluate_board(chessboard))
-    println("Hashkey: ", generate_pos_key(chessboard))
+    println("Hashkey: ", chessboard.key)
     donullmove!(chessboard)
     println("After mirror: ", evaluate_board(chessboard))
-    println("Hashkey: ", generate_pos_key(chessboard))
+    println("Hashkey: ", chessboard.key)
     donullmove!(chessboard)
 end
 

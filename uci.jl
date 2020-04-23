@@ -12,7 +12,7 @@ function uciCommunication()
     while true
         input = split(readline())
         if "uci" in input
-            
+            pv.repetition = []
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")
@@ -81,8 +81,8 @@ function uciCommunication()
                 global blackincrement = parse(Float64, input[blackincrementindex])
                 global black_time += blackincrement
             end
-            posKey = generate_pos_key(board, key)
-            move =  calc_best_move(board, 12, pv, key, posKey)
+            posKey = board.key
+            move =  calc_best_move(board, 20, pv, key, posKey)
             if move != nothing
                 move = tostring(move)
             else

@@ -1,14 +1,7 @@
 
 using Chess
 mutable struct Keys
-    squareKeys::Array
-    pieceKeys::Array
-    sideKey::Int
-    castleKey::Int
-    # general variables
-
     nodes::Int
-    
 end
 
 mutable struct Pv
@@ -20,109 +13,6 @@ mutable struct Pv
     killer_moves::Array
 end
 
-function rand32()
-    return rand(UInt32, 1)[1]
-end
-
-function generate_key()
-    key = 0
-    piece1 = rand32()
-    piece2 = rand32()
-    piece3 = rand32()
-
-    key ⊻= piece1
-    key ⊻= piece2
-    key ⊻= piece3
-    println("Key 1: ", key)
-    key ⊻= piece1
-    println("Key1 out key:", key)
-    key = 0
-    key ⊻= piece2
-    key ⊻= piece3
-    println("no piece 1: ", key)
-end
-
-
-function InitHashKeys(keys::Keys)
-    
-    for i in 1:1:12
-        append!(keys.pieceKeys, rand32())
-    end
-    for i in 1:1:64
-        append!(keys.squareKeys, rand32())
-    end
-    keys.sideKey = rand32()
-    keys.castleKey = rand32()
-    return keys
-end
-
-function generate_pos_key(chessboard, keys)::Int
-    final_key = 0
-
-    for i in  1:1:64
-        if pieceon(chessboard, Square(i)) != EMPTY
-            if pieceon(chessboard, Square(i)) ==  PIECE_WP
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[1]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_WB
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[2]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_WN
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[3]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_WR
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[4]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_WQ
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[5]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_WK
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[6]
-            end
-            if pieceon(chessboard, Square(i)) ==  PIECE_BP
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[7]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_BB
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[8]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_BN
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[9]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_BR
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[10]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_BQ
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[11]
-            end
-            if pieceon(chessboard, Square(i)) == PIECE_BK
-                final_key ⊻= keys.squareKeys[i]
-                final_key ⊻= keys.pieceKeys[12]
-            end
-        end
-    end
-    if sidetomove(chessboard) == WHITE
-        final_key ⊻= keys.sideKey
-    end
-    if cancastlekingside(chessboard, sidetomove(chessboard))
-        final_key ⊻= keys.castleKey
-    end
-    if cancastlequeenside(chessboard, sidetomove(chessboard))
-        final_key ⊻= keys.castleKey
-    end
-
-    return final_key
-end
 
 function Init_Pv_Table(pv::Pv)
     for i in 1:1:64
@@ -138,7 +28,7 @@ end
 
 
 function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
-    gameboard_key = generate_pos_key(chessboard, keys)
+    gameboard_key = chessboard.key
     index = (gameboard_key % pvtable.PVSIZE) + 1
     if gameboard_key in pvtable.pv_table[index]["posKey"]
         return pvtable.pv_table[index]["move"]
@@ -147,7 +37,7 @@ function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
 end
 
 function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtable::Pv)
-    gameboard_key = generate_pos_key(chessboard, keys)
+    gameboard_key = chessboard.key
 
     index = (gameboard_key % pvtable.PVSIZE) + 1
 
@@ -167,7 +57,7 @@ function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtab
 end
 
 function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Keys)::Tuple{Bool,Int,Move}
-    gameboard_key = generate_pos_key(chessboard, key)
+    gameboard_key = chessboard.key
     index = (gameboard_key % pv.PVSIZE) + 1
     move = MOVE_NULL
     if gameboard_key in pv.pv_table[index]["posKey"]

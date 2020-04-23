@@ -1,7 +1,6 @@
 
 include("minmax.jl")
 # function to play game against itself
-
 function play_game()
     print("Welcome to Juliachess, do you want to be white or black [w] b: ")
     player = readline()
@@ -21,7 +20,7 @@ function play_game()
             
             number_moves += 1
             if isplayerblack == true
-                move = calc_best_move(b, 5, pv, key)
+                move = calc_best_move(b, 7, pv, key, b.key)
                 move =  movetosan(b, move)
             else
                 print("Move: ")
@@ -36,16 +35,13 @@ function play_game()
                     break
                 end
             end
-            println("Repetition: ", repetition(b, key, pv))
-            pushfirst!(pv.repetition, generate_pos_key(b, key))
-            
             println("bestmove ", move)
             
             domove!(g, move)  
         else
             if isplayerblack == false
-                #move = calc_best_move(b, 5, pv, key)
-                #move = movetosan(b, move)
+                move = calc_best_move(b, 7, pv, key, b.key)
+                move = movetosan(b, move)
                 print("Move: ")
                 move = readline()
             else
@@ -87,5 +83,3 @@ function benchmark()
     println("Average time per move: ", e / n)
 
 end
-
-

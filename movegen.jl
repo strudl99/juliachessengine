@@ -1,10 +1,10 @@
 using Chess
 include("pvtable.jl")
 # MvvLVA move sort
-piece_list = [PIECE_WP, PIECE_WN, PIECE_WB, PIECE_WR, PIECE_WQ, PIECE_WK,PIECE_BP, PIECE_BN, PIECE_BB, PIECE_BR, PIECE_BQ, PIECE_BK]
+#= piece_list = [PIECE_WP, PIECE_WN, PIECE_WB, PIECE_WR, PIECE_WQ, PIECE_WK,PIECE_BP, PIECE_BN, PIECE_BB, PIECE_BR, PIECE_BQ, PIECE_BK]
 victim_scores = [100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600, 0]
 
-
+ =#
 
 function count_pieces(chessboard)
     piece_count_prev = 0
@@ -39,7 +39,6 @@ function capture_moves(chessboard::Board, all_moves, pv::Pv)::Array
 end
 
 function only_capture_moves(chessboard::Board, pv::Pv)
-    counter = 1
     all_moves = moves(chessboard)
     capture_moves_list = Array{Tuple}(undef, 1)
     for (i, move) in enumerate(all_moves)
@@ -47,11 +46,9 @@ function only_capture_moves(chessboard::Board, pv::Pv)
         if moveto != EMPTY
             if sidetomove(chessboard) == WHITE
                 push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6])) 
-                counter += 1
             else
                 
                 push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val]))
-                counter += 1
             end        
         end
        

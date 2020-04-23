@@ -14,15 +14,15 @@ timecontrol = false
 playtime = 0::Int
 # pv_move = nothing
 
-function repetition(chessboard, pv::Pv,ply, key)::Bool
+function repetition(chessboard, pv::Pv)::Bool
     if chessboard.r50 == 0
-        pv.repetition = []
         return false
-    elseif key in pv.repetition
+    end
+    if chessboard.key in (length(pv.repetition) > 3 ? pv.repetition[1:3] : pv.repetition)
         return true
     end
     return false
-end 
+end
 
 function time_control()
 
@@ -66,7 +66,7 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
     end =#
     #pos = generate_pos_key(chessboard, key)
     key.nodes += 1::Int
-    if repetition(chessboard, pv, ply, posKey)
+    if repetition(chessboard, pv) && ply > 0
         return DRAW
     end 
     if (key.nodes & 2047) == 0
@@ -113,37 +113,7 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
     end
     return alpha
 end
-#= 
-fen = r1bqkb1r/ppp3pp/2np1p2/8/3QP3/2N1B3/PPP2PPP/R3KB1R w KQkq - 4 9
-without null move :
-info score cp 60 currmove: Bb5 depth 1 nodes 34 time 0.330648871 pv f1b5
-info score cp 40 currmove: Bb5 depth 2 nodes 97 time 0.10537494700000001 pv f1b5 d6d5
-info score cp 90 currmove: Qa4 depth 3 nodes 1121 time 0.06933438700000001 pv d4a4 c8e6 e3a7
-info score cp 30 currmove: Qd2 depth 4 nodes 9572 time 0.659721122 pv d4d2 c8e6 c3d5 f6f5
-info score cp 85 currmove: Bb5 depth 5 nodes 71685 time 4.371753688 pv f1b5 a7a6 b5a4 c8d7 a4c6
-info score cp 40 currmove: Qd5 depth 6 nodes 473477 time 29.81124695 pv d4d5 f8e7 d5h5 g7g6 h5d5 c6e5
 
-with nullmove:
-info score cp 60 currmove: Bb5 depth 1 nodes 34 nullcuts 0 time 0.159650294 pv f1b5
-info score cp 40 currmove: Bb5 depth 2 nodes 97 nullcuts 0 time 0.061241910000000004 pv f1b5 d6d5
-info score cp 90 currmove: Qa4 depth 3 nodes 1121 nullcuts 0 time 0.047682023000000004 pv d4a4 c8e6 e3a7
-info score cp 30 currmove: Qd2 depth 4 nodes 9572 nullcuts 0 time 0.594707647 pv d4d2 c8e6 c3d5 f6f5
-info score cp 85 currmove: Bb5 depth 5 nodes 33331 nullcuts 39 time 1.3627204030000002 pv f1b5 a7a6 b5a4 c8d7 a4c6
-info score cp 40 currmove: Qd5 depth 6 nodes 297611 nullcuts 204 time 11.563456054000001 pv d4d5 a7a6 b5a4 c8d7 a4c6
-
-with hashtable:
-info score cp 60 currmove: Bb5 depth 1 nodes 34 time 0.206197186 pv f1b5
- nullcuts 0 hashcut 0 hashtablehit 0
-info score cp 40 currmove: Bb5 depth 2 nodes 81 time 0.07721535800000001 pv f1b5 d6d5
- nullcuts 0 hashcut 1 hashtablehit 2
-info score cp 90 currmove: Qa4 depth 3 nodes 1068 time 0.056935206 pv d4a4 c8e6 e3a7
- nullcuts 0 hashcut 2 hashtablehit 4
-info score cp 30 currmove: Qd2 depth 4 nodes 8615 time 0.37144631 pv d4d2 c8e6 c3d5 f6f5
- nullcuts 0 hashcut 151 hashtablehit 181
-info score cp 85 currmove: Bb5 depth 5 nodes 29261 time 1.227512694 pv f1b5 a7a6 b5a4 c8d7 a4c6
- nullcuts 39 hashcut 355 hashtablehit 499
-info score cp 40 currmove: Qd5 depth 6 nodes 229035 time 9.122102363 pv d4d5 f8e7 d5h5 g7g6 a4c6
- nullcuts 177 hashcut 3849 hashtablehit 5313 =#
 function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, ply, pv, key, posKey)::Int
     MATE = 100000::Int
     DRAW = 0::Int
@@ -158,7 +128,7 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, ply,
         time_control()
     end
     #pos = generate_pos_key(chessboard, key)
-     if repetition(chessboard, pv, ply, posKey)
+     if repetition(chessboard, pv) && ply > 0
         return DRAW
     end 
     if ischeck(chessboard)
@@ -250,7 +220,7 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, ply,
             end
         end
 
-
+    
     end
     if length(leg) == 0
         if ischeck(chessboard)
@@ -275,7 +245,7 @@ function calc_best_move(chessboard, depth, pv, key, posKey)::Move
 
     bookmove = pickbookmove(chessboard, "/home/manuel/Dokumente/juliachess/openings/top19.obk")
     if bookmove !== nothing
-        push!(pv.repetition, generate_pos_key(chessboard, key))
+        push!(pv.repetition, chessboard.key)
         return bookmove
     end
     clearPvTable(pv)
@@ -319,7 +289,7 @@ function calc_best_move(chessboard, depth, pv, key, posKey)::Move
         print("\n")
         # println(" nullcuts ", nullcut, " hashcut ", hashcut, " hashtablehit ", hashtablehit, " overrides ", over_write, " new writes ", new_write, " killers ", killers, " pvmovecut ", pvmovecut) =#
     end
-    pushfirst!(pv.repetition, generate_pos_key(chessboard, key))
+    pushfirst!(pv.repetition, chessboard.key)
     println(pv.repetition)
     return best_move
 end
