@@ -20,19 +20,24 @@ function capture_moves(chessboard::Board, all_moves, pv::Pv)::Array
     # println(all_moves)
     for (i, move) in enumerate(first.(all_moves))
         moveto = pieceon(chessboard, to(move))
+        #quietMove
+        if pv.killer_moves[1] == (move, 0) && pv.killer_moves[3] == pv.ply
+            #println("KILLER1: ", pv.killer_moves[1])
+            all_moves[i] = (move, 900000)
+        elseif pv.killer_moves[2] == (move, 0) && pv.killer_moves[3] == pv.ply
+            #println("KILLER2: ", pv.killer_moves[2])
+            all_moves[i] = (move, 800000)
+        else
+            all_moves[i] = (move, pv.searchHistory[from(move).val, to(move).val])
+        end
         if moveto != EMPTY
             if sidetomove(chessboard) == WHITE
-                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6]) 
+                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(moveto).val, ptype(moveto).val + 6]) 
             else
-                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val])
+                all_moves[i] = (move, 1000000 + pv.mvvlva_scores[ptype(moveto).val + 6, ptype(moveto).val])
             end
         end
-        if pv.killer_moves[1] == (move, 0)
-            # println("KILLER")
-            all_moves[i] = (move, 900000)
-        elseif pv.killer_moves[2] == (move, 0)
-            all_moves[i] = (move, 800000)
-        end
+        
     end
 
     return all_moves
@@ -40,15 +45,16 @@ end
 
 function only_capture_moves(chessboard::Board, pv::Pv)
     all_moves = moves(chessboard)
+    
     capture_moves_list = Array{Tuple}(undef, 1)
     for (i, move) in enumerate(all_moves)
         moveto = pieceon(chessboard, to(move))
         if moveto != EMPTY
             if sidetomove(chessboard) == WHITE
-                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val, ptype(pieceon(chessboard, from(move))).val + 6])) 
+                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(moveto).val, ptype(moveto).val + 6]) ) 
             else
                 
-                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(pieceon(chessboard, to(move))).val + 6, ptype(pieceon(chessboard, from(move))).val]))
+                push!(capture_moves_list, (move, 1000000 + pv.mvvlva_scores[ptype(moveto).val + 6, ptype(moveto).val]))
             end        
         end
        

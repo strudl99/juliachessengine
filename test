@@ -1,0 +1,9 @@
+rnbqk1nr/p4p2/8/1pppp1pp/2P1Pb2/2BP1N2/PP3PPP/RN1QKB1R w KQkq - 0 1
+with isolated pawn improvement:
+info score cp 205 currmove: cxd5 depth 1 nodes 49 time 0.062375301 pv c4d5     
+info score cp 155 currmove: cxd5 depth 2 nodes 331 time 0.0024396 pv c4d5 g8f6 
+info score cp 285 currmove: cxd5 depth 3 nodes 1443 time 0.023154199 pv c4d5 b8d7 f3g5 
+info score cp 110 currmove: exd5 depth 4 nodes 13723 time 0.17022039900000002 pv e4d5 g8f6 f3e5 
+info score cp 275 currmove: exd5 depth 5 nodes 13309 time 0.201686299 pv e4d5 g8f6 f3g5 
+info score cp 155 currmove: cxd5 depth 6 nodes 123102 time 1.0732332 pv c4d5 c8g4 h2h3 
+info score cp 200 currmove: cxd5 depth 7 nodes 538895 time 4.126019201 pv c4d5 b8d7 f3g5

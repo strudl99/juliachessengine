@@ -8,6 +8,7 @@ function play_game()
     g = Game()
     key,  pv = init()
     isplayerblack = false
+    isplayerboth = true
     if(player == "b")
         isplayerblack = true
     end
@@ -19,7 +20,10 @@ function play_game()
         if sidetomove(b) == WHITE
             
             number_moves += 1
-            if isplayerblack == true
+            if isplayerboth
+                print("Move: ")
+                move = readline()
+            elseif isplayerblack == true 
                 move = calc_best_move(b, 7, pv, key, b.key)
                 move =  movetosan(b, move)
             else
@@ -36,10 +40,16 @@ function play_game()
                 end
             end
             println("bestmove ", move)
-            
+            println("Repetiton: ", repetition(b, pv))
+            println("PV", pv.repetition)
+            println("move 50: ", b.r50)
+            push!(pv.repetition, b.key)
             domove!(g, move)  
         else
-            if isplayerblack == false
+            if isplayerboth
+                print("Move: ")
+                move = readline()
+            elseif isplayerblack == false 
                 move = calc_best_move(b, 7, pv, key, b.key)
                 move = movetosan(b, move)
                 print("Move: ")
@@ -58,12 +68,16 @@ function play_game()
                 end
             end
             println("bestmove ", move, " ")
+            println("Repetiton: ", repetition(b, pv))
+            println("PV", pv.repetition)
+            println("move 50: ", b.r50)
+            push!(pv.repetition, b.key)
             domove!(g, move)
         end
     end
-        
+    println(g)
     return number_moves
-    print(g)
+    
     
     
 end

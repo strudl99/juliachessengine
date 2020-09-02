@@ -5,14 +5,22 @@ function init()
     pieceKeys = []
     sideKey = 0
     castle_key = 0
+    index_rep = 1
+    how_many_reps = 0
     pv_table = []
     history = []::Array
-    repetition = []
-    killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0)]
+    repetition = []::Array
+    ply = 0
+    killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), 0]
     nodes = 0::Int
     mvvlva_scores = zeros(12, 12)
+    searchHistory = []
     PVSIZE = 0x10000 * 5 
-    pv = Pv(pv_table, PVSIZE, history, repetition, mvvlva_scores, killer_moves)
+    white_passed_mask = []
+    black_passed_mask = []
+    isoloni_mask = []
+    moveList = MoveList(200)
+    pv = Pv(pv_table, PVSIZE, history, repetition, mvvlva_scores, killer_moves, index_rep, how_many_reps, ply, searchHistory, white_passed_mask, black_passed_mask, isoloni_mask, moveList)
     init_mvvlva(pv)
     keys = Keys(nodes)
     pv = Init_Pv_Table(pv)

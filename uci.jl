@@ -5,14 +5,13 @@ white_time = 0
 black_time = 0
 
 function uciCommunication()
-    ENINGENAME = "strudlsjuliachessv0.7"
+    ENINGENAME = "strudlsjuliachessv0.8"
     AUTHOR = "strudl"
     board = startboard()
     key,  pv = init()
     while true
         input = split(readline())
         if "uci" in input
-            pv.repetition = []
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")

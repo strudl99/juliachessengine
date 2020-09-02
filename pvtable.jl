@@ -11,22 +11,118 @@ mutable struct Pv
     repetition::Array
     mvvlva_scores::Array
     killer_moves::Array
+    index_rep::Int
+    how_many_reps::Int
+    ply
+    searchHistory
+    white_passed_mask
+    black_passed_mask
+    isoloni_mask
+    moveList
 end
+function initBitmask(pv)
+    ranks = [SS_RANK_1, SS_RANK_2, SS_RANK_3,SS_RANK_4, SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8]
+    files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
+    for i = 1:1:56
+        push!(pv.white_passed_mask, SquareSet())
+    end
+    
+    outerindex = 1
+    
+    for i = 1:1:7
+        minusRank = SquareSet()
+        for k = 1:1:i
+            minusRank = union(minusRank, ranks[k])
+        end
+        for j = 1:1:2
+            pv.white_passed_mask[outerindex] = union(pv.white_passed_mask[outerindex], files[j] - minusRank)
+        end
+        outerindex += 1
+        for l = 1:1:6
+            for j = l:1:l+2
+                pv.white_passed_mask[outerindex] = union(pv.white_passed_mask[outerindex], files[j] - minusRank)
+            end
+            outerindex += 1
+        end
+        for j = 7:1:8
+            pv.white_passed_mask[outerindex] = union(pv.white_passed_mask[outerindex], files[j] - minusRank)
+        end
+        outerindex += 1
+    end
 
+    for i = 1:1:56
+        push!(pv.black_passed_mask, SquareSet())
+    end
+    
+    outerindex = 1
+    
+    for i = 8:-1:2
+        minusRank = SquareSet()
+        for k = 8:-1:8-(8-i)
+            minusRank = union(minusRank, ranks[k])
+        end
+        for j = 1:1:2
+            pv.black_passed_mask[outerindex] = union(pv.black_passed_mask[outerindex], files[j] - minusRank)
+        end
+        outerindex += 1
+        for l = 1:1:6
+            for j = l:1:l+2
+                pv.black_passed_mask[outerindex] = union(pv.black_passed_mask[outerindex], files[j] - minusRank)
+            end
+            outerindex += 1
+        end
+        
+        
+        
+
+        for j = 7:1:8
+            pv.black_passed_mask[outerindex] = union(pv.black_passed_mask[outerindex], files[j] - minusRank)
+        end
+        outerindex += 1
+    end
+
+    for i = 1:1:56
+        push!(pv.isoloni_mask, SquareSet())
+    end
+
+    outerindex = 1
+    for j = 1:1:7
+        pv.isoloni_mask[outerindex] = SS_FILE_B
+        outerindex += 1
+        for i = 1:1:6
+            pv.isoloni_mask[outerindex] = union(files[i], files[i+2])
+            outerindex += 1
+        end
+        pv.isoloni_mask[outerindex] = SS_FILE_G
+        outerindex += 1
+    end
+end
 
 function Init_Pv_Table(pv::Pv)
     for i in 1:1:64
         push!(pv.history, MOVE_NULL)
     end
-   
+    for i in 1:1:64
+        push!(pv.repetition, 0)
+    end
+    initBitmask(pv)
+    pv.searchHistory = zeros(64,64)
+
     for i in  1:1:pv.PVSIZE
         push!(pv.pv_table, Dict("move" => MOVE_NULL::Move,
             "posKey" => 0, "score" => 0, "depth" => 0, "flags" => ""))
     end
     return pv
 end
-
-
+function clear_rep(pv::Pv)
+    for i in 1:1:64
+        pv.repetition[i] = 0
+    end
+    pv.killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), 0]
+    for i in 1:1:64
+        pv.searchHistory[i, i] = 0
+    end
+end
 function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
     gameboard_key = chessboard.key
     index = (gameboard_key % pvtable.PVSIZE) + 1
@@ -40,13 +136,13 @@ function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtab
     gameboard_key = chessboard.key
 
     index = (gameboard_key % pvtable.PVSIZE) + 1
-
-    #= if pv_table[index]["posKey"] == 0
-        global new_write += 1
-    else
-        global over_write += 1
-    end =#
-
+    if debug
+        if pvtable.pv_table[index]["posKey"] == 0
+            global new_write += 1
+        else
+            global over_write += 1
+        end 
+    end
     pvtable.pv_table[index]["posKey"] = gameboard_key
     pvtable.pv_table[index]["move"] = move
     pvtable.pv_table[index]["score"] = score
@@ -63,8 +159,10 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
     if gameboard_key in pv.pv_table[index]["posKey"]
         move = pv.pv_table[index]["move"]
         if pv.pv_table[index]["depth"] >= depth
+            if debug
+                global hashtablehit += 1
+            end
             
-            # global hashtablehit += 1
             @assert pv.pv_table[index]["depth"] > 0
             score = pv.pv_table[index]["score"]
             if pv.pv_table[index]["flags"] == "HFALPHA" && score <= alpha
@@ -107,9 +205,7 @@ function get_history(depth, chessboard, key::Keys, pv::Pv)
     while move !== nothing && count <= depth
        # println(move)
         if move in moves(chessboard) && count <= 2
-
             count += 1
-            
             u = domove!(chessboard, move)
             push!(undoarray, u)
             pv.history[count] = move
