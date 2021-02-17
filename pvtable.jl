@@ -106,7 +106,7 @@ function Init_Pv_Table(pv::Pv)
         push!(pv.repetition, 0)
     end
     initBitmask(pv)
-    pv.searchHistory = zeros(64,64)
+    pv.searchHistory = zeros(Int16 ,64,64)
 
     for i in  1:1:pv.PVSIZE
         push!(pv.pv_table, Dict("move" => MOVE_NULL::Move,
@@ -131,8 +131,10 @@ function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
     end
     return MOVE_NULL
 end
-
+global mutex = Threads.Condition()
 function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtable::Pv)
+    
+
     gameboard_key = chessboard.key
 
     index = (gameboard_key % pvtable.PVSIZE) + 1
@@ -148,6 +150,7 @@ function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtab
     pvtable.pv_table[index]["score"] = score
     pvtable.pv_table[index]["flags"] = flags
     pvtable.pv_table[index]["depth"] = depth
+
     
 
 end

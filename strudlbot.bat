@@ -1,2 +1,2 @@
-julia C:\Users\manue\Documents\juliachessengine\uci.jl
+julia uci.jl
 pause

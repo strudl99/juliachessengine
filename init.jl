@@ -15,7 +15,7 @@ function init()
     nodes = 0::Int
     mvvlva_scores = zeros(12, 12)
     searchHistory = []
-    PVSIZE = 0x10000 * 5 
+    PVSIZE = 506 # 1 zeile Dict hat 8 byte
     white_passed_mask = []
     black_passed_mask = []
     isoloni_mask = []
