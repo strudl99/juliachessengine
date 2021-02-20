@@ -20,6 +20,7 @@ function uciCommunication()
             println("readyok")
         elseif "ucinewgame" in input
             board = startboard()
+            key, pv = init()
         elseif "position" in input
             if "startpos" in input
                 board = startboard()
