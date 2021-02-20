@@ -5,20 +5,21 @@ mutable struct Keys
 end
 
 mutable struct Pv
-    pv_table::Array
+    pv_table::Array{Dict{String,Any}}
     PVSIZE::UInt
     history::Array
-    repetition::Array
-    mvvlva_scores::Array
-    killer_moves::Array
+    repetition::Array{Int, 1}
+    mvvlva_scores::Array{Float64,2}
+    killer_moves::Array{Tuple{Move,Int64},1}
     index_rep::Int
     how_many_reps::Int
-    ply
-    searchHistory
-    white_passed_mask
-    black_passed_mask
-    isoloni_mask
-    moveList
+    ply::Int
+    hisPly::Int
+    searchHistory::Array{Int32,2}
+    white_passed_mask::Array{SquareSet, 1}
+    black_passed_mask::Array{SquareSet, 1}
+    isoloni_mask::Array{SquareSet, 1}
+    moveList::MoveList
 end
 function initBitmask(pv)
     ranks = [SS_RANK_1, SS_RANK_2, SS_RANK_3,SS_RANK_4, SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8]
@@ -102,12 +103,14 @@ function Init_Pv_Table(pv::Pv)
     for i in 1:1:64
         push!(pv.history, MOVE_NULL)
     end
-    for i in 1:1:64
+    for i in 1:1:200
         push!(pv.repetition, 0)
     end
     initBitmask(pv)
-    pv.searchHistory = zeros(Int16 ,64,64)
-
+    pv.searchHistory = zeros(Int32,64,64)
+    for i in 1:1:length(pv.repetition)
+        pv.repetition[i] = 0
+    end
     for i in  1:1:pv.PVSIZE
         push!(pv.pv_table, Dict("move" => MOVE_NULL::Move,
             "posKey" => 0, "score" => 0, "depth" => 0, "flags" => ""))
@@ -115,10 +118,7 @@ function Init_Pv_Table(pv::Pv)
     return pv
 end
 function clear_rep(pv::Pv)
-    for i in 1:1:64
-        pv.repetition[i] = 0
-    end
-    pv.killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), 0]
+    pv.killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), (MOVE_NULL, 0)]
     for i in 1:1:64
         pv.searchHistory[i, i] = 0
     end
