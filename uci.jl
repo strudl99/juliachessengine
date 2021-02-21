@@ -5,7 +5,7 @@ white_time = 0
 black_time = 0
 
 function uciCommunication()
-    ENINGENAME = "strudlsjuliachessv0.8"
+    ENINGENAME = "strudlsjuliachessv1.0"
     AUTHOR = "strudl"
     board = startboard()
     key,  pv = init()
@@ -16,10 +16,8 @@ function uciCommunication()
             println("id author ", AUTHOR)
             println("uciok")
         elseif "isready" in input
-            
             println("readyok")
         elseif "ucinewgame" in input
-            board = startboard()
             key, pv = init()
         elseif "position" in input
             if "startpos" in input
@@ -92,7 +90,8 @@ function uciCommunication()
             
         end
        	if "stop" in input
-       	    exit(1)
+       	    global timecontrol = true
+            global calculating = false
        	end
         if "quit" in input
             exit(1)

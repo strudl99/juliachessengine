@@ -178,7 +178,7 @@ function piece_value(b::Board, pv::Pv)::Int
     #println(score_white)
     wkings_squares = squares(kings(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wkings_squares)
-        if score_white <= 850
+        if score_white <= 1350
             score += 10000  + (king_endgame_square_table[wkings_squares[i].val])::Int
         else 
             # println("ENDGAME")
@@ -228,7 +228,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     bkings_squares = squares(kings(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(bkings_squares)
-        if score_white <= 850
+        if score_white <= 1350
             score -= (10000  + (king_endgame_square_table[mirror64[bkings_squares[i].val]])::Int)
         else 
             # println("ENDGAME")
