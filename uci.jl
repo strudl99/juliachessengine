@@ -23,14 +23,16 @@ function uciCommunication()
             if "startpos" in input
                 board = startboard()
                 if "moves" in input
+                    pv.hisPly = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
+                        pv.hisPly += 1
                         move = string(input[index])
                         # println(move)
                         domove!(board, move)
+                        pv.repetition[pv.hisPly] = board.key
                     end
-
                 end
             
             elseif "fen" in input
@@ -45,13 +47,17 @@ function uciCommunication()
                 board = fromfen(string(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6))
                 
                 if "moves" in input
+                    pv.hisPly = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
+                        pv.hisPly += 1
                         move = string(input[index])
                         # println(move)
                         domove!(board, move)
+                        pv.repetition[pv.hisPly]
                     end
+                    println(pv.repetition)
 
                 end
             end

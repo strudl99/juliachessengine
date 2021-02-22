@@ -19,15 +19,17 @@ hashtablehit = 0
 # pv_move =
 
 function repetition(chessboard, pv::Pv, ply)::Bool
-    index = (pv.hisPly - chessboard.r50)
-    if index <= 0 
+    index = (pv.hisPly - chessboard.r50) + 1 ::Int
+    if index < 0
+        return false
+    elseif index == 0
         index = 1
     end
     #println(index)
     #println(pv.repetition)
-    for i = index:1:pv.hisPly-1
+    @inbounds for i = index:1:pv.hisPly-1
+        #println(i)
         if chessboard.key == pv.repetition[i]
-            #println("repetition")
             return true
         end
         
@@ -101,7 +103,7 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
             return DRAW
         end
     end
-    if pv.ply > 2 && repetition(chessboard, pv, pv.ply)
+    if repetition(chessboard, pv, pv.ply)
         return DRAW
     end
     key.nodes += 1::Int
@@ -160,8 +162,12 @@ function negamax(depth, alpha::Int, beta::Int, board, color, nullmove, pv, key, 
     if (key.nodes & 2047) == 0
         time_control()
     end 
-    if pv.ply > 2 && repetition(chessboard, pv, pv.ply)
+    if repetition(chessboard, pv, pv.ply)
         return DRAW
+    end 
+    check = ischeck(chessboard)
+    if check
+        depth += 1
     end
     score = -100000000
     bestmove = MOVE_NULL::Move
@@ -174,7 +180,7 @@ function negamax(depth, alpha::Int, beta::Int, board, color, nullmove, pv, key, 
         return hashscore
     end 
     #nullmove pruning
-    if nullmove && !ischeck(chessboard) && pv.ply > 0 && big_piece(chessboard) && depth >= 3
+    if nullmove && !check && pv.ply > 0 && big_piece(chessboard) && depth >= 3
         u = donullmove!(chessboard)
         pv.ply += 1::Int
         score = -negamax(depth - 4, -beta, -beta + 1, chessboard, -color, false,  pv, key, lists)
@@ -239,7 +245,7 @@ function negamax(depth, alpha::Int, beta::Int, board, color, nullmove, pv, key, 
         end
     end
     if length(leg) == 0
-        if ischeck(chessboard)
+        if check
             return -MATE + pv.ply
         else
             return DRAW
@@ -259,20 +265,13 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
     bookmove = nothing
 
-    bookmove = pickbookmove(board, "/home/strudl/juliachessengine/openings/top19.obk") #
+    bookmove = pickbookmove(board, "openings/top19.obk", minscore = 5) #/home/strudl/juliachessengine/
     if bookmove !== nothing
         return bookmove
     end
     clearPvTable(pv)
     #clear_search(pv)
     clear_rep(pv)
-    try
-        pv.hisPly += 1 ::Int64
-        pv.repetition[pv.hisPly] = board.key
-    catch
-        print(pv.hisPly)
-        print(pv.repetition[pv.hisPly])
-    end
     
     side = sidetomove(board)
     if timecontrol == true
@@ -285,7 +284,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     best_move = nothing
     number_of_pieces = count_pieces(board)
     lists = Array{MoveList, 1}(undef, 1)
-    for current_depth in 1:1:max_death
+    @inbounds for current_depth in 1:1:max_death
         chessboard = board
         
         global begin_time = round(Int64, time() * 1000)
@@ -314,18 +313,18 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
             break
         end
         best_move = probe_Pv_Table(chessboard, key, pv)
-        get_history(current_depth, chessboard, key, pv)
-        pv_search = [pv.history[i] for i in 1:1:current_depth]
+        #get_history(current_depth, chessboard, key, pv)
+        #pv_search = [pv.history[i] for i in 1:1:current_depth]
 
         print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes,  " time ", (round(Int64, time() *1000) - begin_time), " pv ") 
-        @inbounds for i in 1:1:current_depth
+       #=  @inbounds for i in 1:1:current_depth
             if pv_search[i] != MOVE_NULL
 
                 print(tostring(pv_search[i]), " ")
             else
                 break
             end
-        end 
+        end  =#
         print("\n")
         if debug
             println("\nDEBUG [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]")

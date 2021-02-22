@@ -9,13 +9,13 @@ function init()
     how_many_reps = 0
     pv_table = []
     history = []
-    repetition = Array{Int64, 1}(undef, 1)
+    repetition = Array{Int128, 1}(undef, 1)
     ply = 0 ::Int
     killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), (MOVE_NULL, 0)]::Array{Tuple{Move,Int64},1}
     nodes = 0::Int
     mvvlva_scores = zeros(12, 12)
     searchHistory = zeros(Int32,64,64)::Array{Int32,2}
-    PVSIZE = 131125::Int # 1 zeile Dict hat 8 byte
+    PVSIZE = 262250::Int # 1 zeile Dict hat 8 byte
     white_passed_mask = []
     black_passed_mask = []
     hisPly = 0

@@ -8,7 +8,7 @@ mutable struct Pv
     pv_table::Array{Dict{String,Any}}
     PVSIZE::UInt
     history::Array
-    repetition::Array{Int, 1}
+    repetition::Array{Int128, 1}
     mvvlva_scores::Array{Float64,2}
     killer_moves::Array{Tuple{Move,Int64},1}
     index_rep::Int
@@ -103,7 +103,7 @@ function Init_Pv_Table(pv::Pv)
     for i in 1:1:64
         push!(pv.history, MOVE_NULL)
     end
-    for i in 1:1:200
+    for i in 1:1:500
         push!(pv.repetition, 0)
     end
     initBitmask(pv)

@@ -66,10 +66,10 @@ const king_square_table =
 [
     -30, -30, -30, -30, -20, -10, 20, 20,
     -40, -40, -40, -40, -30, -20, 20, 30, 
-    -40, -40, -40, -40, -30, -20, 0, -30,
+    -40, -40, -40, -40, -30, -20, 0, 10,
     -50, -50, -50, -50, -40, -20, 0, 0,
     -50, -50, -50, -50, -40, -20, 0, 0, 
-    -40, -40, -40, -40, -30, -20, 0, -30, 
+    -40, -40, -40, -40, -30, -20, 0, 10, 
     -40, -40, -40, -40, -30, -20, 20, 30, 
     -30, -30, -30, -30, -20, -10, 20, 20
 ]
@@ -129,13 +129,17 @@ function piece_value(b::Board, pv::Pv)::Int
     QUEEN_SEMI_OPEN_FILE = 3
 
     # global p += 1::Int
+    wMaterial = 0
+    bMaterial = 0
     bpawn = pawns(b, BLACK)
     wpawn = pawns(b, WHITE)
     allPawns = pawns(b)
     bpawn_squares = squares(bpawn)::Array{Square,1}
     wpawn_squares = squares(wpawn)::Array{Square,1}
     @inbounds for i in 1:1:length(wpawn_squares)
+        wMaterial += 100
         score += 100  + pawn_square_table[wpawn_squares[i].val]::Int
+        
         if isempty(intersect(pv.white_passed_mask[convertToHorizontalwhite[wpawn_squares[i].val]], bpawn))
             score += pawn_passed[rank(wpawn_squares[i]).val]
             #println("PASSER : ", wpawn_squares[i])
@@ -147,10 +151,12 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     wknights_squares = squares(knights(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wknights_squares)
+        wMaterial += 320
         score += 320  + knight_square_table[wknights_squares[i].val]::Int
     end
     wbishops_squares = squares(bishops(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wbishops_squares)
+        wMaterial += 330
         score += 330  + bishop_square_table[wbishops_squares[i].val]::Int
         if i == 2
             score += 30
@@ -158,6 +164,8 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     wrook_squares = squares(rooks(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wrook_squares)
+
+        wMaterial += 500
         score += 500 + rook_square_table[wrook_squares[i].val]
         if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
             score += ROOK_OPEN_FILE
@@ -165,8 +173,10 @@ function piece_value(b::Board, pv::Pv)::Int
             score += ROOK_SEMI_OPEN_FILE
         end
     end
-    wqueen_squares = squares(queens(b, WHITE))::Array{Square,1}
+    queenWhite = queens(b, WHITE)::SquareSet
+    wqueen_squares = squares(queenWhite)::Array{Square,1}
     @inbounds for i in 1:1:length(wqueen_squares)
+        wMaterial += 900
         score += 900  + queen_square_table[wqueen_squares[i].val]
         if isempty(intersect(allPawns, files[file(wqueen_squares[i]).val]))
             score += QUEEN_OPEN_FILE
@@ -174,11 +184,10 @@ function piece_value(b::Board, pv::Pv)::Int
             score += QUEEN_SEMI_OPEN_FILE
         end
     end
-    score_white = score
     #println(score_white)
     wkings_squares = squares(kings(b, WHITE))::Array{Square,1}
     @inbounds for i in 1:1:length(wkings_squares)
-        if score_white <= 1350
+        if wMaterial <= 1350
             score += 10000  + (king_endgame_square_table[wkings_squares[i].val])::Int
         else 
             # println("ENDGAME")
@@ -186,6 +195,7 @@ function piece_value(b::Board, pv::Pv)::Int
         end
     end
     @inbounds for i in 1:1:length(bpawn_squares)
+        bMaterial += 100
         score -= (100 + pawn_square_table[mirror64[bpawn_squares[i].val]]::Int)
         if isempty(intersect(pv.black_passed_mask[convertToHorizontalblack[bpawn_squares[i].val]], wpawn))
             score += pawn_passed[rank(bpawn_squares[i]).val]
@@ -198,11 +208,12 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     bknights_squares = squares(knights(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(bknights_squares)
-
+        bMaterial += 320
         score -= (320 + knight_square_table[mirror64[bknights_squares[i].val]]::Int)
     end
     bbishops_squares = squares(bishops(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(bbishops_squares)
+        bMaterial += 330
         score -=(330  + bishop_square_table[mirror64[bbishops_squares[i].val]]::Int)
         if i == 2
             score -= 30
@@ -210,6 +221,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     brook_squares = squares(rooks(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(brook_squares)
+        bMaterial += 500
         score -= (500 + rook_square_table[mirror64[brook_squares[i].val]])
         if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
             score -= ROOK_OPEN_FILE
@@ -217,8 +229,10 @@ function piece_value(b::Board, pv::Pv)::Int
             score -= ROOK_SEMI_OPEN_FILE
         end
     end
-    bqueen_squares = squares(queens(b, BLACK))::Array{Square,1}
+    queenBlack = queens(b, BLACK)::SquareSet
+    bqueen_squares = squares(queenBlack)::Array{Square,1}
     @inbounds for i in 1:1:length(bqueen_squares)
+        bMaterial += 900
         score -= (900  + queen_square_table[mirror64[bqueen_squares[i].val]])
         if isempty(intersect(allPawns, files[file(bqueen_squares[i]).val]))
             score -= QUEEN_OPEN_FILE
@@ -228,7 +242,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end
     bkings_squares = squares(kings(b, BLACK))::Array{Square,1}
     @inbounds for i in 1:1:length(bkings_squares)
-        if score_white <= 1350
+        if bMaterial <= 1350
             score -= (10000  + (king_endgame_square_table[mirror64[bkings_squares[i].val]])::Int)
         else 
             # println("ENDGAME")
@@ -241,6 +255,9 @@ end
 function evaluate_board(chessboard::Board, pv::Pv)::Int
     # plus is white (except isolated pawn => because it has negative effect) and minus is black
     summe = 0
+    if ismaterialdraw(chessboard)
+        return 0
+    end
     summe += piece_value(chessboard, pv)
     return summe
 end
