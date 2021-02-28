@@ -11,17 +11,18 @@ function init()
     history = []
     repetition = Array{Int128, 1}(undef, 1)
     ply = 0 ::Int
-    killer_moves = [(MOVE_NULL, 0), (MOVE_NULL, 0), (MOVE_NULL, 0)]::Array{Tuple{Move,Int64},1}
+    killer_moves = Array{Move, 2}(undef, 2,20)
     nodes = 0::Int
     mvvlva_scores = zeros(12, 12)
     searchHistory = zeros(Int32,64,64)::Array{Int32,2}
-    PVSIZE = 262250::Int # 1 zeile Dict hat 8 byte
+    PVSIZE = 81920::Int # 1 zeile Dict hat 64 byte
     white_passed_mask = []
     black_passed_mask = []
     hisPly = 0
     isoloni_mask = []
     moveList = MoveList(200)
-    pv = Pv(pv_table, PVSIZE, history, repetition, mvvlva_scores, killer_moves, index_rep, how_many_reps, ply, hisPly, searchHistory, white_passed_mask, black_passed_mask, isoloni_mask, moveList)
+    side = WHITE
+    pv = Pv(pv_table, PVSIZE, history, repetition, mvvlva_scores, killer_moves, index_rep, how_many_reps, ply, hisPly, searchHistory, white_passed_mask, black_passed_mask, isoloni_mask, moveList, side)
     init_mvvlva(pv)
     keys = Keys(nodes)
     pv = Init_Pv_Table(pv)

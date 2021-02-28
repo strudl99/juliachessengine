@@ -18,7 +18,10 @@ function uciCommunication()
         elseif "isready" in input
             println("readyok")
         elseif "ucinewgame" in input
-            key, pv = init()
+            clear_hash_table(pv)
+            for i in 1:1:length(pv.repetition)
+                pv.repetition[i] = 0
+            end
         elseif "position" in input
             if "startpos" in input
                 board = startboard()
@@ -100,7 +103,7 @@ function uciCommunication()
             global calculating = false
        	end
         if "quit" in input
-            exit(1)
+            exit(0)
         end
     end
 end
