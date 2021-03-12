@@ -4,12 +4,15 @@ include("minmax.jl")
 white_time = 0
 black_time = 0
 
+
+
 function uciCommunication()
     ENINGENAME = "strudlsjuliachessv1.0"
     AUTHOR = "strudl"
     board = startboard()
     key,  pv = init()
     while true
+
         input = split(readline())
         if "uci" in input
             println("id name ", ENINGENAME)
@@ -103,7 +106,7 @@ function uciCommunication()
             global calculating = false
        	end
         if "quit" in input
-            exit(0)
+            exit()
         end
     end
 end

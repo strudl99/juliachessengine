@@ -4,23 +4,32 @@ mutable struct Keys
     nodes::Int32
 end
 
+ @enum FLAGS begin
+    HFALPHA
+    HFBETA
+    HFEXACT
+end
+
 mutable struct Pv
-    pv_table::Array{Dict{String,Any}}
     PVSIZE::UInt
+    pv_table::Array{Dict{String,Int128}, 1}
     history::Array
     repetition::Array{Int128, 1}
-    mvvlva_scores::Array{Float64,2}
+    mvvlva_scores::Array{Int64,2}
     killer_moves::Array{Move, 2}
     index_rep::Int
     how_many_reps::Int
     ply::Int
     hisPly::Int
-    searchHistory::Array{Int32,2}
+    searchHistory::Array{Int64,2}
     white_passed_mask::Array{SquareSet, 1}
     black_passed_mask::Array{SquareSet, 1}
     isoloni_mask::Array{SquareSet, 1}
     moveList::MoveList
     side
+    INF::Int
+    MATE::Int
+    debug::Bool
 end
 function initBitmask(pv)
     ranks = [SS_RANK_1, SS_RANK_2, SS_RANK_3,SS_RANK_4, SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8]
@@ -113,8 +122,8 @@ function Init_Pv_Table(pv::Pv)
         pv.repetition[i] = 0
     end
     for i in  1:1:pv.PVSIZE
-        push!(pv.pv_table, Dict("move" => MOVE_NULL::Move,
-            "posKey" => 0, "score" => 0, "depth" => 0, "flags" => ""))
+        push!(pv.pv_table, Dict("move" => 0,
+            "posKey" => 0, "score" => 0, "depth" => 0, "flags" => -1))
     end
     return pv
 end
@@ -123,24 +132,24 @@ function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
     gameboard_key = chessboard.key
     index = (gameboard_key % pvtable.PVSIZE) + 1
     if gameboard_key in pvtable.pv_table[index]["posKey"]
-        return pvtable.pv_table[index]["move"]
+        return Move(pvtable.pv_table[index]["move"])
     end
     return MOVE_NULL
 end
 global mutex = Threads.Condition()
-function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtable::Pv)
+function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys, pvtable::Pv)
     
 
     gameboard_key = chessboard.key
     index = (gameboard_key % pvtable.PVSIZE) + 1
 
     @assert index >= 1 && index <= pvtable.PVSIZE
-    @assert depth >= 1 && depth < 20
-    @assert flags == "HFALPHA" || flags == "HFBETA" || flags == "HFEXACT"
-    @assert score >= -100000000 && score <= 100000000
-    @assert pvtable.ply >= 0 && pvtable.ply < 20
+    @assert depth >= 1 && depth <= 20
+    @assert flags == HFALPHA || flags == HFBETA || flags == HFEXACT
+    @assert score >= -pvtable.INF  && score <= pvtable.INF 
+    @assert pvtable.ply >= 0 && pvtable.ply <= 20
 
-    if debug
+    if pvtable.debug
         if pvtable.pv_table[index]["posKey"] == 0
             global new_write += 1
         else
@@ -148,16 +157,16 @@ function store_Pv_Move(chessboard, move, score, flags, depth,  keys::Keys, pvtab
         end 
     end
     ## wie functioniert es nochmal
-    if score > 100000 - 20
+    if score > pvtable.INF - 20
         score += pvtable.ply
-    elseif score < -(100000 - 20)
+    elseif score < -(pvtable.INF - 20)
         score -= pvtable.ply
     end
 
     pvtable.pv_table[index]["posKey"] = gameboard_key
-    pvtable.pv_table[index]["move"] = move
+    pvtable.pv_table[index]["move"] = move.val
     pvtable.pv_table[index]["score"] = score
-    pvtable.pv_table[index]["flags"] = flags
+    pvtable.pv_table[index]["flags"] = Int(flags)
     pvtable.pv_table[index]["depth"] = depth
 
 end
@@ -165,7 +174,7 @@ end
 function clear_hash_table(pv::Pv)
     for i in  1:1:pv.PVSIZE
         pv.pv_table[i]["posKey"] = 0
-        pv.pv_table[i]["move"] = MOVE_NULL::Move
+        pv.pv_table[i]["move"] = 0
         pv.pv_table[i]["score"] = 0
         pv.pv_table[i]["flags"] = 0
         pv.pv_table[i]["depth"] = 0
@@ -179,38 +188,38 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
     index = (gameboard_key % pv.PVSIZE) + 1
 
     @assert index >= 1 && index <= pv.PVSIZE
-    @assert depth >= 1 && depth < 20
+    @assert depth >= 1 && depth <= 20
     @assert alpha < beta
-    @assert alpha >= -100000000 && alpha <= 100000000
-    @assert beta >= -100000000 && beta <=100000000
-    @assert score >= -100000000 && score <= 100000000
-    @assert pv.ply >= 0 && pv.ply < 20
+    @assert alpha >= -pv.INF  && alpha <= pv.INF 
+    @assert beta >= -pv.INF  && beta <=pv.INF 
+    @assert score >= -pv.INF  && score <= pv.INF 
+    @assert pv.ply >= 0 && pv.ply <= 20
 
 
     move = MOVE_NULL::Move
     if gameboard_key in pv.pv_table[index]["posKey"]
-        move = pv.pv_table[index]["move"]
+        move = Move(pv.pv_table[index]["move"])
         if pv.pv_table[index]["depth"] >= depth
-            if debug
+            if pv.debug
                 global hashtablehit += 1
             end
-            flagEntry = pv.pv_table[index]["flags"]
-            @assert pv.pv_table[index]["depth"] >= 1 && pv.pv_table[index]["depth"] < 20
-            @assert flagEntry == "HFALPHA" || flagEntry == "HFBETA" || flagEntry == "HFEXACT"
-            score = pv.pv_table[index]["score"]::Int
-            if score > 100000 - 20
+            flagEntry = FLAGS(pv.pv_table[index]["flags"])
+            @assert pv.pv_table[index]["depth"] >= 1 && pv.pv_table[index]["depth"] <= 20
+            @assert flagEntry == HFALPHA || flagEntry == HFBETA || flagEntry == HFEXACT
+            score = pv.pv_table[index]["score"]
+            if score > pv.INF  - 20
                 score -= pv.ply
-            elseif score < -(100000 - 20)
+            elseif score < -(pv.INF - 20)
                 score += pv.ply
             end
 
-            if flagEntry == "HFALPHA" && score <= alpha
+            if flagEntry == HFALPHA && score <= alpha
                 score = alpha
                 return true, score, move
-            elseif flagEntry == "HFBETA" && score >= beta
+            elseif flagEntry == HFBETA && score >= beta
                 score = beta
                 return true, score, move
-            elseif flagEntry == "HFEXACT"
+            elseif flagEntry == HFEXACT
                 return true, score, move
             end
 
@@ -222,6 +231,7 @@ function clear_search(pv::Pv)
     for i in 1:1:length(pv.history)
         pv.history[i] = MOVE_NULL
     end
+    clear_hash_table(pv)
     for i in 1:1:length(pv.killer_moves)
         pv.killer_moves[i] = Move(0000)
     end
