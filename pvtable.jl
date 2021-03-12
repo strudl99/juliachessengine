@@ -231,7 +231,7 @@ function clear_search(pv::Pv)
     for i in 1:1:length(pv.history)
         pv.history[i] = MOVE_NULL
     end
-    #clear_hash_table(pv)
+    clear_hash_table(pv)
     for i in 1:1:length(pv.killer_moves)
         pv.killer_moves[i] = Move(0000)
     end

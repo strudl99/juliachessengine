@@ -95,7 +95,7 @@ const mirror64 = [
     1, 2, 3, 4, 5, 6, 7, 8,
 ]
 endgame = false::Bool
-
+#m = MoveList(200)
 function piece_value(b::Board, pv::Pv)::Int
     files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
     endgame = false
@@ -104,6 +104,9 @@ function piece_value(b::Board, pv::Pv)::Int
     ROOK_SEMI_OPEN_FILE = 5
     QUEEN_OPEN_FILE = 5
     QUEEN_SEMI_OPEN_FILE = 3
+
+    pWHITE = pieces(b, WHITE)
+    pBLACK = pieces(b, BLACK)
 
     # global p += 1::Int
     bpawn = pawns(b, BLACK)
@@ -153,22 +156,25 @@ function piece_value(b::Board, pv::Pv)::Int
                 #println(pawn_passed[rank(wpawn_squares[i]).val]) 
                 #println("PASSER : ", wpawn_squares[i])
         end
- #=        if isempty(intersect(pv.isoloni_mask[convertToHorizontal[wpawn_squares[i].val]], wpawn))
+         if isempty(intersect(pv.isoloni_mask[convertToHorizontal[wpawn_squares[i].val]], wpawn))
             score += ISOLATED_PAWN
             #println("ISOLONI : ", wpawn_squares[i])
-        end  =#
+        end  
     end
     
-    @inbounds for i in 1:1:lwkn
+    @inbounds for i=1:1:lwkn
         score +=  knight_square_table[convertToHorizontal[wknights_squares[i].val]]::Int
+        score += squarecount(knightattacks(wknights_squares[i]))
     end
     
-    @inbounds for i in 1:1:lwb
+    @inbounds for i= 1:1:lwb
         score += bishop_square_table[convertToHorizontal[wbishops_squares[i].val]]::Int
+        score += squarecount(bishopattacks(pBLACK ∪ pWHITE, wbishops_squares[i]))
     end
     
     @inbounds for i in 1:1:lwr
         score += rook_square_table[convertToHorizontal[wrook_squares[i].val]]
+        score += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
           if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
             score += ROOK_OPEN_FILE
         elseif isempty(intersect(bpawn, files[file(wrook_squares[i]).val]))
@@ -188,21 +194,24 @@ function piece_value(b::Board, pv::Pv)::Int
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], wpawn))
             score -= pawn_passed_black[rank(bpawn_squares[i]).val] 
         end
-#=         if isempty(intersect(pv.isoloni_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], bpawn))
+         if isempty(intersect(pv.isoloni_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], bpawn))
             score -= ISOLATED_PAWN
-        end    =#
+        end    
     end
     
     @inbounds for i in 1:1:lbkn
         score -= knight_square_table[mirror64[convertToHorizontal[bknights_squares[i].val]]]::Int
+        score -= squarecount(knightattacks(bknights_squares[i]))
     end
     
     @inbounds for i in 1:1:lbb
         score -= bishop_square_table[mirror64[convertToHorizontal[bbishops_squares[i].val]]]::Int
+        score -= squarecount(bishopattacks(pBLACK ∪ pWHITE, bbishops_squares[i]))
     end
     
     @inbounds for i in 1:1:lbr
         score -= rook_square_table[mirror64[convertToHorizontal[brook_squares[i].val]]]
+        score -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
         if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
             score -= ROOK_OPEN_FILE
         elseif isempty(intersect(wpawn, files[file(brook_squares[i]).val]))
@@ -224,8 +233,10 @@ function piece_value(b::Board, pv::Pv)::Int
         score += 30
     end
     if sidetomove(b) == WHITE
+        #score += (movecount(b))
         return score
     else
+        #score -= (movecount(b))
         return -score
     end 
 end

@@ -53,7 +53,7 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
     value = Int64(0)
     index = 1
     #m = moves(chessboard)
-    @inbounds for i in move_num:1:length(m)
+    @inbounds for i in move_num:1:m.count
         moveto = pieceon(chessboard, to(m[i]))
         if pvmove == m[i]
             if pv.debug
@@ -125,7 +125,7 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
     recycle!(movelist)
     all_moves = moves(chessboard, movelist)
     score = -pv.INF
-    for i in 1:1:length(all_moves)
+    for i in 1:1:all_moves.count
         on = pieceon(chessboard, to(all_moves[i]))
         if on == EMPTY  # only captures
             continue
@@ -217,7 +217,7 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
     leg = moves(chessboard, movelist)
     score = -pv.INF
     foundPv = false::Bool
-    @inbounds for i in 1:1:length(leg)
+    @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move)
         # global checkmate = false
         moveto = pieceon(chessboard, to(leg[i]))
@@ -250,13 +250,13 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
                 end
                 if moveto == EMPTY
                     pv.searchHistory[from(bestmove).val, to(bestmove).val] += depth
-                end
+                end 
                 foundPv = true
                 alpha = score
             end
         end
     end
-    if !haslegalmoves(chessboard)
+    if length(leg) == 0
         if check
             return -pv.INF + pv.ply
         else
@@ -280,7 +280,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
     bookmove = nothing
 
-    bookmove = pickbookmove(board, "/home/strudl/juliachessengine/openings/top19.obk", minscore=10) #
+    #bookmove = pickbookmove(board, "/home/strudl/juliachessengine/openings/top19.obk", minscore=10) #
     if bookmove !== nothing
         return bookmove
     end
