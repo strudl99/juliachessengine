@@ -94,16 +94,16 @@ const mirror64 = [
     9, 10, 11, 12, 13, 14, 15, 16, 
     1, 2, 3, 4, 5, 6, 7, 8,
 ]
-endgame = false::Bool
+const files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
+const endgame = false
+const ISOLATED_PAWN = -10
+const ROOK_OPEN_FILE = 10
+const ROOK_SEMI_OPEN_FILE = 5
+const QUEEN_OPEN_FILE = 5
+const QUEEN_SEMI_OPEN_FILE = 3
 #m = MoveList(200)
 function piece_value(b::Board, pv::Pv)::Int
-    files = [SS_FILE_A, SS_FILE_B, SS_FILE_C, SS_FILE_D, SS_FILE_E, SS_FILE_F, SS_FILE_G, SS_FILE_H]
-    endgame = false
-    ISOLATED_PAWN = -10
-    ROOK_OPEN_FILE = 10
-    ROOK_SEMI_OPEN_FILE = 5
-    QUEEN_OPEN_FILE = 5
-    QUEEN_SEMI_OPEN_FILE = 3
+    
 
     pWHITE = pieces(b, WHITE)
     pBLACK = pieces(b, BLACK)
@@ -151,6 +151,7 @@ function piece_value(b::Board, pv::Pv)::Int
     score  = wMaterial - bMaterial
     @inbounds for i in 1:1:lwp
         score += pawn_square_table[convertToHorizontal[wpawn_squares[i].val]]::Int 
+        score += squarecount(intersect(pawnattacks(WHITE, wpawn_squares[i]), pBLACK))
         if isempty(intersect(pv.white_passed_mask[convertToHorizontal[wpawn_squares[i].val]], bpawn))
                 score += pawn_passed[rank(wpawn_squares[i]).val]
                 #println(pawn_passed[rank(wpawn_squares[i]).val]) 
@@ -175,22 +176,27 @@ function piece_value(b::Board, pv::Pv)::Int
     @inbounds for i in 1:1:lwr
         score += rook_square_table[convertToHorizontal[wrook_squares[i].val]]
         score += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
-          if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
+      #=     if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
             score += ROOK_OPEN_FILE
         elseif isempty(intersect(bpawn, files[file(wrook_squares[i]).val]))
             score += ROOK_SEMI_OPEN_FILE
-        end  
+        end   =#
     end
-
+    @inbounds for i in 1:1:lwq
+        score += squarecount(queenattacks(pBLACK ∪ pWHITE, wqueen_squares[i]))
+    end
     if wMaterial <= 1350
         score += king_endgame_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
+        score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
     else 
         #println("ENDGAME")
+        score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
         score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     end
     
     @inbounds for i in 1:1:lbp
         score -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
+        score -= squarecount(intersect(pawnattacks(BLACK, bpawn_squares[i]), pWHITE))
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], wpawn))
             score -= pawn_passed_black[rank(bpawn_squares[i]).val] 
         end
@@ -212,18 +218,24 @@ function piece_value(b::Board, pv::Pv)::Int
     @inbounds for i in 1:1:lbr
         score -= rook_square_table[mirror64[convertToHorizontal[brook_squares[i].val]]]
         score -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
-        if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
+#=         if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
             score -= ROOK_OPEN_FILE
         elseif isempty(intersect(wpawn, files[file(brook_squares[i]).val]))
             score -= ROOK_SEMI_OPEN_FILE
-        end  
+        end   =#
+    end
+    @inbounds for i in 1:1:lbq
+        score -= squarecount(queenattacks(pBLACK ∪ pWHITE, bqueen_squares[i]))
     end
     
     if bMaterial <= 1350
         score -= king_endgame_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
+        score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
+
     else 
         #println("ENDGAME")
         score -= king_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
+        score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
     end
     
     if lbb >= 2

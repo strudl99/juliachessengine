@@ -1,14 +1,16 @@
 
 using Chess
 mutable struct Keys
-    nodes::Int32
+    nodes::Array{Int64, 1}
 end
 
- @enum FLAGS begin
+@enum FLAGS begin
     HFALPHA
     HFBETA
     HFEXACT
 end
+
+const mutexList = Array{Threads.Condition, 1}(undef, 65536)
 
 mutable struct Pv
     PVSIZE::UInt
@@ -19,8 +21,8 @@ mutable struct Pv
     killer_moves::Array{Move, 2}
     index_rep::Int
     how_many_reps::Int
-    ply::Int
-    hisPly::Int
+    ply::Matrix{Int64}
+    hisPly::Matrix{Int64}
     searchHistory::Array{Int64,2}
     white_passed_mask::Array{SquareSet, 1}
     black_passed_mask::Array{SquareSet, 1}
@@ -30,6 +32,7 @@ mutable struct Pv
     INF::Int
     MATE::Int
     debug::Bool
+    inSearch::Array{Move, 1}
 end
 function initBitmask(pv)
     ranks = [SS_RANK_1, SS_RANK_2, SS_RANK_3,SS_RANK_4, SS_RANK_5, SS_RANK_6, SS_RANK_7, SS_RANK_8]
@@ -37,7 +40,9 @@ function initBitmask(pv)
     for i = 1:1:56
         push!(pv.white_passed_mask, SquareSet())
     end
-    
+    for i=1:1:4
+        push!(pv.inSearch, Move(0000))
+    end
     outerindex = 1
     
     for i = 1:1:7
@@ -113,6 +118,10 @@ function Init_Pv_Table(pv::Pv)
     for i in 1:1:64
         push!(pv.history, MOVE_NULL)
     end
+    for i in 1:1:65536
+        mutexList[i] = Threads.Condition()
+    end
+
     for i in 1:1:500
         push!(pv.repetition, 0)
     end
@@ -136,18 +145,18 @@ function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
     end
     return MOVE_NULL
 end
-global mutex = Threads.Condition()
-function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys, pvtable::Pv)
-    
+const mutex1 = Threads.Condition()
+const mutex2 = Threads.Condition()
 
-    gameboard_key = chessboard.key
-    index = (gameboard_key % pvtable.PVSIZE) + 1
+function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys, pvtable::Pv)
+    lock(mutexList[(chessboard.key & 0xffff) + 1])
+    index = (chessboard.key % pvtable.PVSIZE) + 1
 
     @assert index >= 1 && index <= pvtable.PVSIZE
     @assert depth >= 1 && depth <= 20
     @assert flags == HFALPHA || flags == HFBETA || flags == HFEXACT
     @assert score >= -pvtable.INF  && score <= pvtable.INF 
-    @assert pvtable.ply >= 0 && pvtable.ply <= 20
+    @assert pvtable.ply[threadid()] >= 0 && pvtable.ply[threadid()] <= 20
 
     if pvtable.debug
         if pvtable.pv_table[index]["posKey"] == 0
@@ -158,17 +167,17 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
     end
     ## wie functioniert es nochmal
     if score > pvtable.INF - 20
-        score += pvtable.ply
+        score += pvtable.ply[threadid()]
     elseif score < -(pvtable.INF - 20)
-        score -= pvtable.ply
+        score -= pvtable.ply[threadid()]
     end
 
-    pvtable.pv_table[index]["posKey"] = gameboard_key
+    pvtable.pv_table[index]["posKey"] = chessboard.key
     pvtable.pv_table[index]["move"] = move.val
     pvtable.pv_table[index]["score"] = score
     pvtable.pv_table[index]["flags"] = Int(flags)
     pvtable.pv_table[index]["depth"] = depth
-
+    unlock(mutexList[(chessboard.key & 0xffff) + 1])
 end
 
 function clear_hash_table(pv::Pv)
@@ -182,10 +191,8 @@ function clear_hash_table(pv::Pv)
 end
 
 function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Keys)::Tuple{Bool,Int,Move}
-    
-    
-    gameboard_key = chessboard.key
-    index = (gameboard_key % pv.PVSIZE) + 1
+    lock(mutexList[(chessboard.key & 0xffff) + 1])
+    index = (chessboard.key % pv.PVSIZE) + 1
 
     @assert index >= 1 && index <= pv.PVSIZE
     @assert depth >= 1 && depth <= 20
@@ -193,11 +200,11 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
     @assert alpha >= -pv.INF  && alpha <= pv.INF 
     @assert beta >= -pv.INF  && beta <=pv.INF 
     @assert score >= -pv.INF  && score <= pv.INF 
-    @assert pv.ply >= 0 && pv.ply <= 20
+    @assert pv.ply[threadid()] >= 0 && pv.ply[threadid()] <= 20
 
-
+    
     move = MOVE_NULL::Move
-    if gameboard_key in pv.pv_table[index]["posKey"]
+    if chessboard.key in pv.pv_table[index]["posKey"]
         move = Move(pv.pv_table[index]["move"])
         if pv.pv_table[index]["depth"] >= depth
             if pv.debug
@@ -208,30 +215,36 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
             @assert flagEntry == HFALPHA || flagEntry == HFBETA || flagEntry == HFEXACT
             score = pv.pv_table[index]["score"]
             if score > pv.INF  - 20
-                score -= pv.ply
+                score -= pv.ply[threadid()]
             elseif score < -(pv.INF - 20)
-                score += pv.ply
+                score += pv.ply[threadid()]
             end
 
             if flagEntry == HFALPHA && score <= alpha
                 score = alpha
+                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFBETA && score >= beta
                 score = beta
+                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFEXACT
+                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             end
 
         end
     end
-    return false, 0, move     
+    unlock(mutexList[(chessboard.key & 0xffff) + 1])
+    return false, 0, move
+    
 end
 function clear_search(pv::Pv) 
     for i in 1:1:length(pv.history)
         pv.history[i] = MOVE_NULL
     end
     clear_hash_table(pv)
+    
     for i in 1:1:length(pv.killer_moves)
         pv.killer_moves[i] = Move(0000)
     end

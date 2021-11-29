@@ -1,3 +1,3 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
-julia uci.jl
+julia -t $1 /home/manuel/juliachessengine/uci.jl

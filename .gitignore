@@ -1,3 +1,6 @@
 *.pgn
 *.log
 .venv/
+*.json
+.obsidian/
+.vscode/

@@ -1,8 +1,7 @@
 using Chess, Chess.Book
-using Memoize
+using Base.Threads: @spawn, threadid, SpinLock
 
 include("eval.jl")
-#pv.debug = true
 stop = false::Bool
 calculating = true::Bool
 begin_time = 0::Int
@@ -20,17 +19,19 @@ hashtablehit = 0
 # pv_move =
 
 function repetition(chessboard, pv::Pv, ply)::Bool
-    index = (pv.hisPly - chessboard.r50) + 1 ::Int
-    if index < 0
+    index1 = (pv.hisPly[1] - chessboard.r50) ::Int
+    
+    if index1 < 0
         return false
-    elseif index == 0
-        index = 1
+    elseif index1 == 0
+        index1 = 1
     end
-    @inbounds for i = index:1:pv.hisPly-1
+    @inbounds for i = 1:1:(pv.hisPly[1] - 1)
         if chessboard.key == pv.repetition[i]
             return true
         end 
     end
+    
     return false
 end
 
@@ -47,7 +48,10 @@ function Base.setindex!(list::MoveList, m::Move, i::Int)
     list.moves[i] = m
 end
 
+
 function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveList, pvmove::Move)::MoveList
+
+    
     temp = MOVE_NULL
     best_score = Int64(0)
     value = Int64(0)
@@ -55,15 +59,22 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
     #m = moves(chessboard)
     @inbounds for i in move_num:1:m.count
         moveto = pieceon(chessboard, to(m[i]))
-        if pvmove == m[i]
+        if m[i] in pv.inSearch
             if pv.debug
                 global pvmovecut += 1::Int
+            end
+            value = 0
+        elseif pvmove == m[i]
+            if pv.debug
+                
             end 
             value = 2000000
-        elseif pv.killer_moves[1, pv.ply] == m[i]
+            index = i
+            break
+        elseif pv.killer_moves[1, pv.ply[threadid()]] == m[i]
             #println("KILLER1: ", pv.killer_moves[1, pv.ply])
             value =  900000
-        elseif pv.killer_moves[2, pv.ply] == m[i]
+        elseif pv.killer_moves[2, pv.ply[threadid()]] == m[i]
             #println("KILLER2: ", pv.killer_moves[2])
             value =  800000
         elseif moveto != EMPTY
@@ -80,6 +91,7 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
             index = i
         end
     end
+    pv.inSearch[threadid()] = m[index]
     temp = m[move_num]
     m[move_num] = m[index]
     m[index] = temp
@@ -88,29 +100,29 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
 end
 
 function strudlmove!(chessboard, move, pv)
-    pv.repetition[pv.hisPly] = chessboard.key
-    pv.hisPly += 1
-    pv.ply += 1
     u = domove!(chessboard, move)
+    #pv.repetition[pv.hisPly[1] + 1] = chessboard.key
+    pv.hisPly[1] += 1
+    pv.ply[threadid()] += 1
     return u
 end
 
 function undostrudlmove!(chessboard, undoinfo, pv)
-    pv.hisPly -= 1
-    pv.ply -= 1
+    pv.hisPly[1] -= 1
+    pv.ply[threadid()] -= 1
     undomove!(chessboard, undoinfo)
 end
 
 function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdepth::Int, key::Keys, pv::Pv, lists)::Int
     DRAW = 0::Int
-    if (key.nodes & 2047) == 0
+    if (key.nodes[threadid()] & 2047) == 0
         time_control()
     end
-    key.nodes += 1::Int
-    if (ismaterialdraw(chessboard) || repetition(chessboard, pv, pv.ply) || chessboard.r50 >= 100)
+    key.nodes[threadid()] += 1::Int
+    #= if (ismaterialdraw(chessboard) || repetition(chessboard, pv, pv.ply[threadid()]) || chessboard.r50 >= 100)
         return DRAW
-    end 
-     if pv.ply > 19
+    end  =#
+     if pv.ply[threadid()] > 20
         return evaluate_board(chessboard, pv)::Int
     end 
     score = evaluate_board(chessboard::Board, pv)::Int
@@ -121,8 +133,8 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
     if score > alpha
         alpha = score
     end
-    movelist = lists[pv.ply + 1]
-    recycle!(movelist)
+    movelist = lists[pv.ply[threadid()]]
+    recycle!(movelist) 
     all_moves = moves(chessboard, movelist)
     score = -pv.INF
     for i in 1:1:all_moves.count
@@ -132,7 +144,6 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
         end
         pick_next_move_fast(chessboard, i, pv, all_moves, MOVE_NULL)
         u = strudlmove!(chessboard, all_moves[i], pv)
-        #pv.repetition[pv.ply] = chessboard.key
         score = -quiescence(-beta, -alpha, chessboard, -color, maxdepth - 1, key, pv, lists)
         undostrudlmove!(chessboard, u, pv)
         if calculating == false
@@ -152,10 +163,17 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, maxdep
 end
 
 
+t1 = nothing
+t2 = nothing
+t3 = nothing
+t4 = nothing
 
+function copyBoard(board::Board)
+    b = Board(board.board, board.bycolor, board.bytype, board.side, board.castlerights, board.castlefiles, board.epsq, board.r50, board.ksq, board.move, board.occ, board.checkers, board.pin, board.key, board.is960)
+    return b
+end
 
-function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, key, lists)::Int
-    
+function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nullmove, pv, key, lists, leg=nothing)::Int
     DRAW = 0::Int
     bestmove = MOVE_NULL::Move
     pv_move = MOVE_NULL::Move
@@ -164,43 +182,43 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
     score = -pv.INF
     @assert beta > alpha
     @assert depth >= 0
-
+    #chessboard = copyBoard(b)
     check = ischeck(chessboard)
     if check
         depth += 1
     end
+    
     if depth <= 0
         #return evaluate_board(chessboard, pv) * color
         return quiescence(alpha, beta, chessboard, color, 1, key, pv, lists)
     end
     
-    if (key.nodes & 2047) == 0
+    if (key.nodes[threadid()] & 2047) == 0
         time_control()
     end 
-    key.nodes += 1::Int
+    key.nodes[threadid()] += 1::Int
 
-    if pv.ply != 0 &&  (ismaterialdraw(chessboard) || repetition(chessboard, pv, pv.ply) || chessboard.r50 >= 100) 
+   #=  if pv.ply[threadid()] > 1 && (ismaterialdraw(chessboard) || repetition(chessboard, pv, pv.ply[threadid()]) || chessboard.r50 >= 100) 
         return DRAW
-    end 
-     if pv.ply > 19
+    end  =#
+     if pv.ply[threadid()] > 20
         return evaluate_board(chessboard, pv)::Int
     end 
     
-    
-    hashbool,  hashscore::Int, pv_move::Move = probe_hash_entry(chessboard, score, alpha, beta, depth, pv, key)
+    hashbool, hashscore::Int, pv_move::Move = probe_hash_entry(chessboard, score, alpha, beta, depth, pv, key)
     if hashbool
-        #= if pv.debug
+         if pv.debug
             global hashcut += 1::Int
-        end =#
+        end 
         return hashscore
     end 
     #nullmove pruning
-    if nullmove && !check && pv.ply > 0 && big_piece(chessboard) && depth >= 4
+     if nullmove && !check && pv.ply[threadid()] > 0 && big_piece(chessboard) && depth >= 4
         u = donullmove!(chessboard)
-        pv.ply += 1::Int
-        score = -negamax(depth - 4, -beta, -beta + 1, chessboard, -color, false,  pv, key, lists)
-        undomove!(chessboard, u)
-        pv.ply -= 1::Int
+        pv.ply[threadid()] += 1::Int
+        pv.hisPly[1] += 1
+        score = -negamax(depth - 4, initalDepth,-beta, -beta + 1, chessboard, -color, false,  pv, key, lists)
+        undostrudlmove!(chessboard, u, pv)
         if calculating == false && timecontrol == true
             return 0
         end
@@ -211,30 +229,33 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
             
             return beta
         end
-    end
-    movelist = lists[pv.ply + 1]
+    end 
+    movelist = lists[pv.ply[threadid()]]
     recycle!(movelist)
     leg = moves(chessboard, movelist)
+
     score = -pv.INF
     foundPv = false::Bool
+
+    
     @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move)
         # global checkmate = false
         moveto = pieceon(chessboard, to(leg[i]))
         undo = strudlmove!(chessboard, leg[i], pv)
         #print(undo)
-         if foundPv
-            score = -negamax(depth - 1, -alpha - 1, -alpha, chessboard, -color, true,  pv, key, lists)
+        if foundPv
+            score = -negamax(depth - 1, initalDepth,-alpha - 1, -alpha, chessboard, -color, true,  pv, key, lists)
             if score > alpha && score < beta
-                score = -negamax(depth - 1, -beta, -alpha, chessboard, -color, true,  pv, key, lists)
+                score = -negamax(depth - 1, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
             end
         else 
-       
-        score = -negamax(depth - 1, -beta, -alpha, chessboard, -color, true,  pv, key, lists)
+    
+        score = -negamax(depth - 1, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
         end
         undostrudlmove!(chessboard, undo, pv)
         if calculating == false
-            return 0
+            return -pv.INF
         end
         if score > bestscore
             bestscore = score
@@ -242,8 +263,8 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
             if score > alpha
                 if score >= beta
                     if moveto == EMPTY
-                        pv.killer_moves[2, pv.ply] = pv.killer_moves[1, pv.ply]
-                        pv.killer_moves[1, pv.ply] = leg[i]
+                        pv.killer_moves[2, pv.ply[threadid()]] = pv.killer_moves[1, pv.ply[threadid()]]
+                        pv.killer_moves[1, pv.ply[threadid()]] = leg[i]
                     end
                     store_Pv_Move(chessboard, bestmove, beta, HFBETA, depth, key, pv)
                     return score
@@ -256,9 +277,10 @@ function negamax(depth, alpha::Int, beta::Int, chessboard, color, nullmove, pv, 
             end
         end
     end
+    
     if length(leg) == 0
         if check
-            return -pv.INF + pv.ply
+            return -pv.INF + pv.ply[threadid()]
         else
             return DRAW
         end
@@ -280,7 +302,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
     bookmove = nothing
 
-    #bookmove = pickbookmove(board, "/home/strudl/juliachessengine/openings/top19.obk", minscore=10) #
+    bookmove = pickbookmove(board, minscore=20) #
     if bookmove !== nothing
         return bookmove
     end
@@ -302,13 +324,32 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     prev_move = nothing
     best_move = MOVE_NULL
     number_of_pieces = count_pieces(board)
-    lists = Array{MoveList, 1}(undef, 1)
-    key.nodes = 0
+    lists1 = Array{MoveList, 1}(undef, 1)
+    lists2 = Array{MoveList, 1}(undef, 1)
+    lists3 = Array{MoveList, 1}(undef, 1)
+    lists4 = Array{MoveList, 1}(undef, 1)
+    for i in 1:1:4
+        key.nodes[i] = 0
+    end
     
+    for i ∈ 1:(40)
+        if i == 1
+            lists1[1] = MoveList(200)
+            lists2[1] = MoveList(200)
+            lists3[1] = MoveList(200)
+            lists4[1] = MoveList(200)
+        else
+            push!(lists1, MoveList(200))
+            push!(lists2, MoveList(200))
+            
+            push!(lists3, MoveList(200))
+            push!(lists4, MoveList(200))
+            
+        end
+    end
     
-    @inbounds for current_depth in 1:1:max_death-1
-        pv.ply = 0
-        chessboard = board
+    @inbounds for current_depth in 1:1:max_death - 1
+        chessboard = fromfen(fen(board))
         
         global begin_time = round(Int64, time() * 1000)
        
@@ -322,14 +363,33 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
             global nullcut = 0
         end
        # global hashcut = 0
-        for i ∈ 1:(40)
-            if i == 1
-                lists[i] = MoveList(200)
-            else
-                push!(lists, MoveList(200))
-            end
+        
+        b1 = fromfen(fen(chessboard))
+        b2 = fromfen(fen(chessboard))
+        b3 = fromfen(fen(chessboard))
+        b4 = fromfen(fen(chessboard))
+        
+        if Threads.nthreads() == 4
+            t1 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+            t2 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, lists2)
+            t3 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b3, side == WHITE ? 1 : -1, true, pv, key, lists3)
+            t4 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b4, side == WHITE ? 1 : -1, true, pv, key, lists4)
+            t1_score = fetch(t1)
+            t2_score = fetch(t2)
+            t3_score = fetch(t3)
+            t4_score = fetch(t4)
+        elseif Threads.nthreads() == 2
+            t1 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+            t2 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, lists2)
+            t1_score = fetch(t1)
+            t2_score = fetch(t2)
+        else
+            t1 = negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+            t1_score = t1
         end
-        value =  negamax(current_depth, -pv.INF , pv.INF, chessboard, side == WHITE ? 1 : -1, true, pv, key, lists)
+        
+            
+        value = t1_score
         if calculating == false
             break
         end
@@ -337,7 +397,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         get_history(current_depth, chessboard, key, pv)
         pv_search = [pv.history[i] for i in 1:1:current_depth]
 
-        print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes,  " time ", (round(Int64, time() *1000) - begin_time), " pv ") 
+        print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1],  " time ", (round(Int64, time() *1000) - begin_time), " pv ") 
        @inbounds for i in 1:1:current_depth
             if pv_search[i] != MOVE_NULL
 
@@ -348,7 +408,9 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         end  
         print("\n")
         if pv.debug
-            println("\npv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]")
+            println("\npv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]"
+                ,"[ node1: ", key.nodes[1], " node2: ", key.nodes[2],  " node3: ", key.nodes[3], " node4: ", key.nodes[4], "]"
+            )
         end
         #println(hashcut)
         # println(" nullcuts ", nullcut, " hashcut ", hashcut, " hashtablehit ", hashtablehit, " overrides ", over_write, " new writes ", new_write, " killers ", killers, " pvmovecut ", pvmovecut) =#

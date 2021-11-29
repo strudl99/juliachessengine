@@ -30,3 +30,13 @@ BenchmarkTools.Trial:
   --------------
   samples:          10000
   evals/sample:     9
+
+4 threads one mutex
+info score cp 185 currmove c4d5 depth 1 nodes 366 time 562 pv c4d5 
+info score cp 165 currmove c4d5 depth 2 nodes 3178 time 2 pv c4d5 c8g4 
+info score cp 187 currmove c4d5 depth 3 nodes 10015 time 4 pv c4d5 c8g4 f1e2 
+info score cp 200 currmove c4d5 depth 4 nodes 45477 time 20 pv c4d5 c8g4 h2h3 g4f3 
+info score cp 200 currmove c4d5 depth 5 nodes 113472 time 38 pv c4d5 c8g4 h2h3 g4f3 d1f3 
+info score cp 208 currmove c4d5 depth 6 nodes 542601 time 424 pv c4d5 b8d7 g2g3 b5b4 g3f4 b4c3 
+info score cp 208 currmove c4d5 depth 7 nodes 2015144 time 1015 pv c4d5 b8d7 g2g3 b5b4 g3f4 b4c3 
+info score cp 208 currmove c4d5 depth 8 nodes 8130757 time 4523 pv c4d5 b8d7 f3e5 b5b4 g3f4 b4c3 

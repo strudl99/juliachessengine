@@ -1,3 +1,6 @@
+using Base: threadid
+using Chess.Book: Threads
+using Chess.Book: Threads
 
 include("minmax.jl")
 # function to play game against itself

@@ -1,8 +1,15 @@
 using Chess, Chess.Book
+
 include("init.jl")
 include("minmax.jl")
 white_time = 0
 black_time = 0
+
+function check_for_and_handle_pause()
+    input = split(readline())
+    print(input)
+end
+
 
 
 
@@ -12,15 +19,21 @@ function uciCommunication()
     board = startboard()
     key,  pv = init()
     while true
-
         input = split(readline())
         if "uci" in input
             println("id name ", ENINGENAME)
             println("id author ", AUTHOR)
             println("uciok")
+            println("Threads: ", Threads.nthreads())
+            println(threadid())
         elseif "isready" in input
             println("readyok")
         elseif "ucinewgame" in input
+            clear_hash_table(pv)
+            for i in 1:1:length(pv.repetition)
+                pv.repetition[i] = 0
+            end
+        elseif "new" in input
             clear_hash_table(pv)
             for i in 1:1:length(pv.repetition)
                 pv.repetition[i] = 0
@@ -29,15 +42,19 @@ function uciCommunication()
             if "startpos" in input
                 board = startboard()
                 if "moves" in input
-                    pv.hisPly = 0
+                    pv.hisPly[1] = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
-                        pv.hisPly += 1
-                        move = string(input[index])
-                        # println(move)
-                        domove!(board, move)
-                        pv.repetition[pv.hisPly] = board.key
+                        if threadid() == 1
+                            pv.repetition[pv.hisPly[1] + 1] = board.key
+                            pv.hisPly[1] += 1
+                            move = string(input[index])
+                            # println(move)
+                            domove!(board, move)
+                            
+                            #println(pv.hisPly[1])
+                        end
                     end
                 end
             
@@ -53,15 +70,15 @@ function uciCommunication()
                 board = fromfen(string(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6))
                 
                 if "moves" in input
-                    pv.hisPly = 0
+                    pv.hisPly[1] = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
-                        pv.hisPly += 1
+                        pv.repetition[pv.hisPly[1] + 1] = board.key
+                        pv.hisPly[1] += 1
                         move = string(input[index])
-                        # println(move)
                         domove!(board, move)
-                        pv.repetition[pv.hisPly]
+                        
                     end
                     println(pv.repetition)
 
