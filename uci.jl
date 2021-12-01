@@ -29,11 +29,13 @@ function uciCommunication()
         elseif "isready" in input
             println("readyok")
         elseif "ucinewgame" in input
+            print("New Game")
             clear_hash_table(pv)
             for i in 1:1:length(pv.repetition)
                 pv.repetition[i] = 0
             end
         elseif "new" in input
+            print("New Game")
             clear_hash_table(pv)
             for i in 1:1:length(pv.repetition)
                 pv.repetition[i] = 0

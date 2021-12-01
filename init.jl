@@ -23,7 +23,7 @@ function init()
     moveList = MoveList(200)
     side = WHITE
 
-    pv = Pv(PVSIZE, pv_table, history, repetition, mvvlva_scores, killer_moves, index_rep, how_many_reps, ply, hisPly, searchHistory, white_passed_mask, black_passed_mask, isoloni_mask, moveList, side, 30000, 29000, true    , [])
+    pv = Pv(PVSIZE, pv_table, history, repetition, mvvlva_scores, killer_moves, index_rep, how_many_reps, ply, hisPly, searchHistory, white_passed_mask, black_passed_mask, isoloni_mask, moveList, side, 30000, 29000, false, [])
     init_mvvlva(pv)
     keys = Keys(nodes)
     pv = Init_Pv_Table(pv)

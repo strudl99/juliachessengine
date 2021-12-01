@@ -149,7 +149,7 @@ const mutex1 = Threads.Condition()
 const mutex2 = Threads.Condition()
 
 function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys, pvtable::Pv)
-    lock(mutexList[(chessboard.key & 0xffff) + 1])
+
     index = (chessboard.key % pvtable.PVSIZE) + 1
 
     @assert index >= 1 && index <= pvtable.PVSIZE
@@ -177,7 +177,6 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
     pvtable.pv_table[index]["score"] = score
     pvtable.pv_table[index]["flags"] = Int(flags)
     pvtable.pv_table[index]["depth"] = depth
-    unlock(mutexList[(chessboard.key & 0xffff) + 1])
 end
 
 function clear_hash_table(pv::Pv)
@@ -191,7 +190,6 @@ function clear_hash_table(pv::Pv)
 end
 
 function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Keys)::Tuple{Bool,Int,Move}
-    lock(mutexList[(chessboard.key & 0xffff) + 1])
     index = (chessboard.key % pv.PVSIZE) + 1
 
     @assert index >= 1 && index <= pv.PVSIZE
@@ -222,20 +220,16 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
 
             if flagEntry == HFALPHA && score <= alpha
                 score = alpha
-                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFBETA && score >= beta
                 score = beta
-                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFEXACT
-                unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             end
 
         end
     end
-    unlock(mutexList[(chessboard.key & 0xffff) + 1])
     return false, 0, move
     
 end
@@ -243,7 +237,7 @@ function clear_search(pv::Pv)
     for i in 1:1:length(pv.history)
         pv.history[i] = MOVE_NULL
     end
-    clear_hash_table(pv)
+    #clear_hash_table(pv)
     
     for i in 1:1:length(pv.killer_moves)
         pv.killer_moves[i] = Move(0000)
