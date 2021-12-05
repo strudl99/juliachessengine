@@ -16,7 +16,7 @@ mutable struct Pv
     PVSIZE::UInt
     pv_table::Array{Dict{String,Int128}, 1}
     history::Array
-    repetition::Array{Int128, 1}
+    repetition::Array{Int128, 2}
     mvvlva_scores::Array{Int64,2}
     killer_moves::Array{Move, 2}
     index_rep::Int
@@ -121,15 +121,8 @@ function Init_Pv_Table(pv::Pv)
     for i in 1:1:65536
         mutexList[i] = Threads.Condition()
     end
-
-    for i in 1:1:500
-        push!(pv.repetition, 0)
-    end
     initBitmask(pv)
     pv.searchHistory = zeros(Int32,64,64)
-    for i in 1:1:length(pv.repetition)
-        pv.repetition[i] = 0
-    end
     for i in  1:1:pv.PVSIZE
         push!(pv.pv_table, Dict("move" => 0,
             "posKey" => 0, "score" => 0, "depth" => 0, "flags" => -1))
@@ -151,7 +144,7 @@ const mutex2 = Threads.Condition()
 function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys, pvtable::Pv)
 
     index = (chessboard.key % pvtable.PVSIZE) + 1
-
+    #lock(mutexList[(chessboard.key & 0xffff) + 1])
     @assert index >= 1 && index <= pvtable.PVSIZE
     @assert depth >= 1 && depth <= 20
     @assert flags == HFALPHA || flags == HFBETA || flags == HFEXACT
@@ -177,6 +170,7 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
     pvtable.pv_table[index]["score"] = score
     pvtable.pv_table[index]["flags"] = Int(flags)
     pvtable.pv_table[index]["depth"] = depth
+    #unlock(mutexList[(chessboard.key & 0xffff) + 1])
 end
 
 function clear_hash_table(pv::Pv)
@@ -190,6 +184,7 @@ function clear_hash_table(pv::Pv)
 end
 
 function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Keys)::Tuple{Bool,Int,Move}
+    #lock(mutexList[(chessboard.key & 0xffff) + 1])
     index = (chessboard.key % pv.PVSIZE) + 1
 
     @assert index >= 1 && index <= pv.PVSIZE
@@ -220,16 +215,20 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
 
             if flagEntry == HFALPHA && score <= alpha
                 score = alpha
+                #unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFBETA && score >= beta
                 score = beta
+                #unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             elseif flagEntry == HFEXACT
+                #unlock(mutexList[(chessboard.key & 0xffff) + 1])
                 return true, score, move
             end
 
         end
     end
+    #lock(mutexList[(chessboard.key & 0xffff) + 1])
     return false, 0, move
     
 end
@@ -245,7 +244,7 @@ function clear_search(pv::Pv)
     for i in 1:1:length(pv.searchHistory)
         pv.searchHistory[i] = 0
     end
-    
+
 end
 function get_history(depth, chessboard, key::Keys, pv::Pv)
 

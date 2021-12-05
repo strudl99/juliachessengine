@@ -33,6 +33,10 @@ function commands()
         if "repetition" in input
             println(repetition(b, pv, 1))
         end
+        if "search" in input
+            i = indexin(["search"], input)[1]
+            calc_best_move(b, parse(Int64, string(input[i + 1])), pv, key, 0)
+        end
     end
 
 end

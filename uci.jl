@@ -29,13 +29,13 @@ function uciCommunication()
         elseif "isready" in input
             println("readyok")
         elseif "ucinewgame" in input
-            print("New Game")
             clear_hash_table(pv)
-            for i in 1:1:length(pv.repetition)
-                pv.repetition[i] = 0
+            for i in 1:1:4
+                for j in 1:1:500
+                    pv.repetition[j, i] = 0
+                end
             end
         elseif "new" in input
-            print("New Game")
             clear_hash_table(pv)
             for i in 1:1:length(pv.repetition)
                 pv.repetition[i] = 0
@@ -45,12 +45,21 @@ function uciCommunication()
                 board = startboard()
                 if "moves" in input
                     pv.hisPly[1] = 0
+                    pv.hisPly[2] = 0
+                    pv.hisPly[3] = 0
+                    pv.hisPly[4] = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
                         if threadid() == 1
-                            pv.repetition[pv.hisPly[1] + 1] = board.key
+                            pv.repetition[pv.hisPly[1] + 1, 1] = board.key
+                            pv.repetition[pv.hisPly[1] + 1, 2] = board.key
+                            pv.repetition[pv.hisPly[1] + 1, 3] = board.key
+                            pv.repetition[pv.hisPly[1] + 1, 4] = board.key
                             pv.hisPly[1] += 1
+                            pv.hisPly[2] += 1
+                            pv.hisPly[3] += 1
+                            pv.hisPly[4] += 1
                             move = string(input[index])
                             # println(move)
                             domove!(board, move)
@@ -73,16 +82,24 @@ function uciCommunication()
                 
                 if "moves" in input
                     pv.hisPly[1] = 0
+                    pv.hisPly[2] = 0
+                    pv.hisPly[3] = 0
+                    pv.hisPly[4] = 0
                     i = indexin(["moves"], input)[1] + 1
                     n = length(input)
                     for index in i:n
-                        pv.repetition[pv.hisPly[1] + 1] = board.key
+                        pv.repetition[pv.hisPly[1] + 1, 1] = board.key
+                        pv.repetition[pv.hisPly[1] + 1, 2] = board.key
+                        pv.repetition[pv.hisPly[1] + 1, 3] = board.key
+                        pv.repetition[pv.hisPly[1] + 1, 4] = board.key
                         pv.hisPly[1] += 1
+                        pv.hisPly[2] += 1
+                        pv.hisPly[3] += 1
+                        pv.hisPly[4] += 1
                         move = string(input[index])
                         domove!(board, move)
                         
                     end
-                    println(pv.repetition)
 
                 end
             end
