@@ -417,7 +417,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         get_history(current_depth, chessboard, key, pv)
         pv_search = [pv.history[i] for i in 1:1:current_depth]
 
-        print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1],  " time ", (round(Int64, time() *1000) - begin_time), " pv ") 
+        print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1],  " time ",(round(Int64, time() *1000) - begin_time), " pv ") 
        @inbounds for i in 1:1:current_depth
             if pv_search[i] != MOVE_NULL
 
@@ -427,6 +427,9 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
             end
         end  
         print("\n")
+        if current_depth >= 6 && bench
+        println(" NPS ", key.nodes[1] ÷ ((round(Int64, time() *1000) - begin_time) / 1000),)
+        end
         if pv.debug
             println("\npv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]"
                 ,"[ node1: ", key.nodes[1], " node2: ", key.nodes[2],  " node3: ", key.nodes[3], " node4: ", key.nodes[4], "]"

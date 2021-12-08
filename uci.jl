@@ -154,8 +154,11 @@ end
 
 precompile(uciCommunication, (String, String))
 try
+
     t = ARGS[1]
+    global bench = true
     uciCommunication(t)
 catch
+    global bench = false
     uciCommunication()
 end
