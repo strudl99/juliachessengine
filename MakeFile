@@ -1,2 +1,0 @@
-strudl: openbench.c
-     gcc -o strudl openbench.c
