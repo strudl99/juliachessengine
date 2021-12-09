@@ -175,7 +175,7 @@ function piece_value(b::Board, pv::Pv)::Int
     
     @inbounds for i in 1:1:lwr
         score += rook_square_table[convertToHorizontal[wrook_squares[i].val]]
-       # score += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
+        score += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
            if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
             score += ROOK_OPEN_FILE
         elseif isempty(intersect(bpawn, files[file(wrook_squares[i]).val]))
@@ -186,7 +186,7 @@ function piece_value(b::Board, pv::Pv)::Int
         score += king_endgame_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
        # score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
     else 
-        #= if wkings_squares[1] in SS_FILE_A
+     if wkings_squares[1] in SS_FILE_A
             if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
                 score += 5
             end
@@ -211,7 +211,7 @@ function piece_value(b::Board, pv::Pv)::Int
             if pieceon(b, SquareFile(file(wkings_squares[1]).val + 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
                 score += 5
             end
-        end =#
+        end 
         score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     end
     
@@ -240,7 +240,7 @@ function piece_value(b::Board, pv::Pv)::Int
     
     @inbounds for i in 1:1:lbr
         score -= rook_square_table[mirror64[convertToHorizontal[brook_squares[i].val]]]
-       # score -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
+        score -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
          if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
             score -= ROOK_OPEN_FILE
         elseif isempty(intersect(wpawn, files[file(brook_squares[i]).val]))
@@ -253,7 +253,7 @@ function piece_value(b::Board, pv::Pv)::Int
         #score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
 
     else 
-#=         if bkings_squares[1] in SS_FILE_A
+        if bkings_squares[1] in SS_FILE_A
             if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
                 score -= 5
             end
@@ -278,7 +278,7 @@ function piece_value(b::Board, pv::Pv)::Int
             if pieceon(b, SquareFile(file(bkings_squares[1]).val + 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
                 score -= 5
             end
-        end =#
+        end 
         score -= king_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
         #score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
     end
