@@ -1,11 +1,13 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
+TEST=
+TEST+="/uci.jl"
 if [ ! -z "$1" ];
 then
     if [ $1 = 'bench' ]; then
-        julia -t 1 /home/manuel/juliachessengine/uci.jl bench
+        julia -t 1 $TEST bench
     else
-        julia -t 1 /home/manuel/juliachessengine/uci.jl
+        julia -t 1 $TEST
     fi
 else
-    julia -t 1 /home/manuel/juliachessengine/uci.jl
+    julia -t 1 $TEST
 fi
