@@ -222,6 +222,7 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
         return hashscore
     end 
     check = ischeck(chessboard)
+    
     #nullmove pruning
      if nullmove && !check && pv.ply[threadid()] > 0 && big_piece(chessboard) && depth >= 4
         u = donullmove!(chessboard)
@@ -250,10 +251,15 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
 
     score = -pv.INF
     foundPv = false::Bool
-
+    eval = evaluate_board(chessboard, pv)
     
     @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move, false)
+        if depth == 1 && !check && !hashbool && alpha > -pv.INF && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !foundPv && leg.count > 1
+            if (eval + 600) < beta # 350 is futilityMargin
+                continue
+            end
+        end
         # global checkmate = false 
         undo = strudlmove!(chessboard, leg[i], pv)
         #print(undo)
