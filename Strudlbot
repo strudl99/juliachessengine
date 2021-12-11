@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-TEST=
-TEST+="/uci.jl"
+TEST="/home/manuel/juliachessengine/"
+TEST+="uci.jl"
 if [ ! -z "$1" ];
 then
     if [ $1 = 'bench' ]; then

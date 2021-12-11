@@ -414,7 +414,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
             break
         end
         best_move = probe_Pv_Table(chessboard, key, pv)
-        get_history(current_depth, chessboard, key, pv)
+        get_history(current_depth, b2, key, pv)
         pv_search = [pv.history[i] for i in 1:1:current_depth]
 
         print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1],  " time ",(round(Int64, time() *1000) - begin_time), " pv ") 
