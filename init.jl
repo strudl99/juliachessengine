@@ -15,7 +15,7 @@ function init()
     nodes = [0, 0, 0, 0]::Array{Int64, 1}
     mvvlva_scores = zeros(12, 12)
     searchHistory = zeros(Int32,64,64)::Array{Int32,2}
-    PVSIZE = 78125::Int # 1 zeile Dict hat 64 byte
+    PVSIZE = 4687500::Int # 1 zeile Dict hat 32 byte
     white_passed_mask = []
     black_passed_mask = []
     hisPly = [1 1 1 1]
