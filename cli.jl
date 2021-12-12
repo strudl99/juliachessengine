@@ -3,6 +3,7 @@ include("minmax.jl")
 function commands()
     b = startboard()
     key, pv = init()
+    global bench = false
     pv.hisPly[1] = 0
     while true
         input = split(readline())
