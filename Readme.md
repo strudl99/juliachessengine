@@ -8,3 +8,4 @@ This is a simple chess engine in julia using [Chess.jl](https://github.com/romst
 - negamax with alphabeta pruning, MVV-LVA, killer-heuristic move ordering. Also it uses nullmove and LMR pruning. It also uses TT-tables.
 - It uses a very simple time management functionality.
 - Engines uses uci protocol.
+- The engine uses [Openbench](https://github.com/AndyGrant/OpenBench/) to verify new features.

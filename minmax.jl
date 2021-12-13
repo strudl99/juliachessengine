@@ -88,6 +88,9 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
         else
             if moveto != EMPTY
                 value = 1000000 + pv.mvvlva_scores[ptype(moveto).val, ptype(pieceon(chessboard, from(m[i]))).val]
+                if see(chessboard, m[i]) < 0
+                    value -= 600
+                end
                 #println("$(pieceon(chessboard, from(m[i]))) x $(moveto) : $(pv.mvvlva_scores[ptype(moveto).val, ptype(pieceon(chessboard, from(m[i]))).val])")
                 #println("$(m[i])")
             elseif epsquare(chessboard) != SQ_NONE
