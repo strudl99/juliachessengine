@@ -171,11 +171,19 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
     end =#
 
 
-    pvtable.pv_table[index].posKey  = chessboard.key
-    pvtable.pv_table[index].move = move.val
-    pvtable.pv_table[index].score = score
-    pvtable.pv_table[index].flags = Int(flags)
-    pvtable.pv_table[index].depth = depth
+    if pvtable.pv_table[index].posKey == 0 || depth < 3
+        pvtable.pv_table[index].posKey  = chessboard.key
+        pvtable.pv_table[index].move = move.val
+        pvtable.pv_table[index].score = score
+        pvtable.pv_table[index].flags = Int(flags)
+        pvtable.pv_table[index].depth = depth
+    elseif depth > pvtable.pv_table[index].depth
+        pvtable.pv_table[index].posKey  = chessboard.key
+        pvtable.pv_table[index].move = move.val
+        pvtable.pv_table[index].score = score
+        pvtable.pv_table[index].flags = Int(flags)
+        pvtable.pv_table[index].depth = depth
+    end
 
     #= pvtable.pv_table[index]["posKey"] = chessboard.key
     pvtable.pv_table[index]["move"] = move.val
