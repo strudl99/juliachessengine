@@ -314,7 +314,7 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
     
     if leg.count == 0
         if check
-            return -pv.INF + pv.ply[1]
+            return -pv.INF + (pv.ply[1])
         else
             return DRAW
         end
