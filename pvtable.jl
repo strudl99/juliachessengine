@@ -169,19 +169,14 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
     elseif score < -(pvtable.INF - 20)
         score -= pvtable.ply[threadid()]
     end
-    if pvtable.pv_table[index].posKey == 0 || depth < 3
-        pvtable.pv_table[index].posKey  = chessboard.key
-        pvtable.pv_table[index].move = move.val
-        pvtable.pv_table[index].score = score
-        pvtable.pv_table[index].flags = Int(flags)
-        pvtable.pv_table[index].depth = depth
-    elseif depth > pvtable.pv_table[index].depth
-        pvtable.pv_table[index].posKey  = chessboard.key
-        pvtable.pv_table[index].move = move.val
-        pvtable.pv_table[index].score = score
-        pvtable.pv_table[index].flags = Int(flags)
-        pvtable.pv_table[index].depth = depth
-    end
+
+
+    pvtable.pv_table[index].posKey  = chessboard.key
+    pvtable.pv_table[index].move = move.val
+    pvtable.pv_table[index].score = score
+    pvtable.pv_table[index].flags = Int(flags)
+    pvtable.pv_table[index].depth = depth
+
     #= pvtable.pv_table[index]["posKey"] = chessboard.key
     pvtable.pv_table[index]["move"] = move.val
     pvtable.pv_table[index]["score"] = score
@@ -209,12 +204,12 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
     @assert alpha < beta
     @assert alpha >= -pv.INF  && alpha <= pv.INF 
     @assert beta >= -pv.INF  && beta <=pv.INF 
-    @assert score >= -pv.INF  && score <= pv.INF 
+    
     @assert pv.ply[threadid()] >= 0 && pv.ply[threadid()] <= 20
 
     
     move = MOVE_NULL::Move
-    if chessboard.key in pv.pv_table[index].posKey
+    if chessboard.key == pv.pv_table[index].posKey
         move = Move(pv.pv_table[index].move)
         if pv.pv_table[index].depth >= depth
             if pv.debug
@@ -229,7 +224,7 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
             elseif score < -(pv.INF - 20)
                 score += pv.ply[threadid()]
             end
-
+            @assert score >= -pv.INF  && score <= pv.INF 
             if flagEntry == HFALPHA && score <= alpha
                 score = alpha
                 #unlock(mutexList[(chessboard.key & 0xffff) + 1])

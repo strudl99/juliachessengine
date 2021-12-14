@@ -55,21 +55,21 @@ function uciCommunication(engine=nothing)
                         i = indexin(["moves"], input)[1] + 1
                         n = length(input)
                         for index in i:n
-                            if threadid() == 1
-                                pv.repetition[pv.hisPly[1] + 1, 1] = board.key
-                                pv.repetition[pv.hisPly[2] + 1, 2] = board.key
-                                pv.repetition[pv.hisPly[3] + 1, 3] = board.key
-                                pv.repetition[pv.hisPly[4] + 1, 4] = board.key
-                                pv.hisPly[1] += 1
-                                pv.hisPly[2] += 1
-                                pv.hisPly[3] += 1
-                                pv.hisPly[4] += 1
-                                move = string(input[index])
-                                # println(move)
-                                domove!(board, move)
-                                
-                                #println(pv.hisPly[1])
-                            end
+                           
+                            pv.repetition[pv.hisPly[1] + 1, 1] = board.key
+                            pv.repetition[pv.hisPly[2] + 1, 2] = board.key
+                            pv.repetition[pv.hisPly[3] + 1, 3] = board.key
+                            pv.repetition[pv.hisPly[4] + 1, 4] = board.key
+                            pv.hisPly[1] += 1
+                            pv.hisPly[2] += 1
+                            pv.hisPly[3] += 1
+                            pv.hisPly[4] += 1
+                            move = string(input[index])
+                            # println(move)
+                            domove!(board, move)
+                            
+                            #println(pv.hisPly[1])
+                        
                         end
                     end
                 
