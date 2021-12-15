@@ -43,6 +43,13 @@ function Base.setindex!(list::MoveList, m::Move, i::Int)
     list.moves[i] = m
 end
 
+function isMoveCheck(chessboard, move)
+    check = false
+    u = domove!(chessboard, move)
+    check = ischeck(chessboard)
+    undomove!(chessboard, u)
+    return check
+end
 
 function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveList, pvmove::Move, quiescenceBool)::MoveList
 
@@ -56,9 +63,6 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
         moveto = pieceon(chessboard, to(m[i]))
         value = Int64(0)
         if !quiescenceBool
-            if m[i] in pv.inSearch
-                continue
-            end
             if pvmove != MOVE_NULL && pvmove == m[i]
                 if pv.debug
                     global pvmovecut += 1
@@ -149,7 +153,7 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, key::K
     oldaplha = alpha
     for i in 1:1:all_moves.count
         on = pieceon(chessboard, to(all_moves[i]))
-        if on == EMPTY  # only captures
+        if on == EMPTY # only captures
             continue
         end
         pick_next_move_fast(chessboard, i, pv, all_moves, MOVE_NULL, true)
@@ -244,26 +248,36 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
     movelist = lists[pv.ply[threadid()]]
     recycle!(movelist)
     leg = moves(chessboard, movelist)
-
+    legal = 0 ::Int
     score = -pv.INF
     foundPv = false::Bool
     eval = evaluate_board(chessboard, pv)
     
     @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move, false)
-        if i > 4 && depth <= 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) 
+        if i > 4 && depth <= 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
             if pv.debug
                 global nullcut += 1
             end
             undo = strudlmove!(chessboard, leg[i], pv)
-            score = -negamax(depth - 2, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
-            if score > alpha
-                score = -negamax(depth - 1, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
+            legal += 1
+            if foundPv
+                score = -negamax(depth - 2, initalDepth,-alpha - 1, -alpha, chessboard, -color, true,  pv, key, lists)
+                if score > alpha && score < beta
+                    score = -negamax(depth - 1, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
+                end
+            else  
+                score = -negamax(depth - 2, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
+                if score > alpha
+                    score = -negamax(depth - 1, initalDepth,-beta, -alpha, chessboard, -color, true,  pv, key, lists)
+                end
             end
+        
             undostrudlmove!(chessboard, undo, pv)
         else
             # global checkmate = false 
             undo = strudlmove!(chessboard, leg[i], pv)
+            legal += 1
             #print(undo)
             if foundPv
                 score = -negamax(depth - 1, initalDepth,-alpha - 1, -alpha, chessboard, -color, true,  pv, key, lists)
@@ -303,7 +317,7 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
         end
     end
     
-    if leg.count == 0
+    if legal == 0
         if check
             return -pv.INF + pv.ply[threadid()]
         else

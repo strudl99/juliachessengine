@@ -163,12 +163,12 @@ function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth,  keys::Keys
             global over_write += 1
         end 
     end
-    ## wie functioniert es nochmal
+    #= ## wie functioniert es nochmal
     if score > pvtable.INF - 20
         score += pvtable.ply[threadid()]
     elseif score < -(pvtable.INF - 20)
         score -= pvtable.ply[threadid()]
-    end
+    end =#
     if pvtable.pv_table[index].posKey == 0 || depth < 3
         pvtable.pv_table[index].posKey  = chessboard.key
         pvtable.pv_table[index].move = move.val
@@ -224,12 +224,12 @@ function probe_hash_entry(chessboard, score, alpha, beta, depth, pv::Pv, key::Ke
             @assert pv.pv_table[index].depth >= 1 && pv.pv_table[index].depth <= 20
             @assert flagEntry == HFALPHA || flagEntry == HFBETA || flagEntry == HFEXACT
             score = pv.pv_table[index].score
-            if score > pv.INF  - 20
+            #= if score > pv.INF  - 20
                 score -= pv.ply[threadid()]
             elseif score < -(pv.INF - 20)
                 score += pv.ply[threadid()]
-            end
-
+            end =#
+            @assert score >= -pv.INF  && score <= pv.INF 
             if flagEntry == HFALPHA && score <= alpha
                 score = alpha
                 #unlock(mutexList[(chessboard.key & 0xffff) + 1])
