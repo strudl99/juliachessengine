@@ -19,12 +19,8 @@ hashtablehit = 0
 # pv_move =
 
 function repetition(chessboard, pv::Pv, ply)::Bool
-    index1 = (pv.hisPly[threadid()] - chessboard.r50) ::Int
-    
-    if index1 < 0
-        return false
-    end
-    @inbounds for i = 0:1:(pv.hisPly[threadid()] - 2)
+    #println(pv.hisPly[threadid()] - chessboard.r50, pv.hisPly[threadid()] - 2)
+    @inbounds for i = 0:1:pv.hisPly[threadid()] - 2
         if chessboard.key == pv.repetition[i + 1, threadid()]
             return true
         end 
@@ -305,7 +301,6 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
                 alpha = score
             end
         end
-        
     end
     
     if leg.count == 0
@@ -332,7 +327,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
     bookmove = nothing
 
-    bookmove = pickbookmove(board, minscore=20, mingamecount=30) #
+    bookmove = pickbookmove(board, minscore=20, mingamecount=30) 
     if bookmove !== nothing
         return bookmove
     end
@@ -340,10 +335,9 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     side = sidetomove(board)
     pv.side = side
     if timecontrol == true
-        if length(pv.repetition) < 40
-            global playtime = side == WHITE ? white_time / 30 : black_time / 30
-        elseif length(pv.repetition) >= 40 && length(pv.repetition) <= 60
-            global playtime = side == WHITE ? white_time / 10 : black_time / 10
+        if pv.hisPly[threadid()] >= 30 && pv.hisPly[threadid()] <= 80 # Move 15 to 40 higher thinking time
+            println("MOVE 21")
+            global playtime = side == WHITE ? white_time / 20 : black_time / 20
         else 
             global playtime = side == WHITE ? white_time / 30 : black_time / 30
         end
@@ -351,13 +345,8 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         global playtime = 0
     end
     max_death = depth
-    prev_move = nothing
     best_move = MOVE_NULL
-    number_of_pieces = count_pieces(board)
     lists1 = Array{MoveList, 1}(undef, 1)
-    lists2 = Array{MoveList, 1}(undef, 1)
-    lists3 = Array{MoveList, 1}(undef, 1)
-    lists4 = Array{MoveList, 1}(undef, 1)
     for i in 1:1:4
         key.nodes[i] = 0
     end
@@ -365,25 +354,18 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     for i ∈ 1:(40)
         if i == 1
             lists1[1] = MoveList(200)
-            lists2[1] = MoveList(200)
-            lists3[1] = MoveList(200)
-            lists4[1] = MoveList(200)
         else
             push!(lists1, MoveList(200))
-            push!(lists2, MoveList(200))
-            
-            push!(lists3, MoveList(200))
-            push!(lists4, MoveList(200))
-            
         end
     end
-    
+    bestmove_prev = MOVE_NULL
+    bestscore_prev = -pv.INF
+    numBestMoves = 0
+    playtimeBool = true
     @inbounds for current_depth in 1:1:max_death - 1
         global calculating = true
-        chessboard = fromfen(fen(board))
-        
+        chessboard = fromfen(fen(board)) 
         global begin_time = round(Int64, time() * 1000)
-       
         if pv.debug
             global hashcut = 0
             global killers = 0
@@ -397,55 +379,49 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         
         b1 = fromfen(fen(chessboard))
         b2 = fromfen(fen(chessboard))
-        b3 = fromfen(fen(chessboard))
-        b4 = fromfen(fen(chessboard))
         global timeover = false
-        if Threads.nthreads() == 4 && current_depth > 3
-            
-            t2 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, lists2)
-            t3 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b3, side == WHITE ? 1 : -1, true, pv, key, lists3)
-            t4 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b4, side == WHITE ? 1 : -1, true, pv, key, lists4)
-            t1 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
-            t1_score = fetch(t1)
-            t2_score = fetch(t2)
-            t3_score = fetch(t3)
-            t4_score = fetch(t4)
-        elseif Threads.nthreads() == 2 && current_depth > 3
-            t1 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
-            t2 = @spawn negamax(current_depth, current_depth,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, lists2)
-            wait(t1)
-            global calculating = false
-            t1_score = fetch(t1)
-            t2_score = fetch(t2)
-        else
-            t1 = negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
-            t1_score = t1
-        end
-        
-            
-        value = t1_score
+        value = negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
         if calculating == false && timeover == true
             break
         end
         best_move = probe_Pv_Table(chessboard, key, pv)
+        if current_depth >= 5 && best_move.val == bestmove_prev.val
+            numBestMoves += 1
+            if pieceon(chessboard, to(best_move)) != EMPTY
+                if playtimeBool && numBestMoves >= 3 && pv.mvvlva_scores[ptype(pieceon(chessboard, to(best_move))).val, ptype(pieceon(chessboard, from(best_move))).val] > 300
+                    global playtime /= 3
+                    playtimeBool = false
+                    println("Playtime down 3")
+                end
+            else
+                if playtimeBool && numBestMoves >= 4 && abs(value - bestscore_prev) < 50 && key.nodes[1] > 1500
+                    global playtime /= 2
+                    playtimeBool = false
+                    println("Playtime down 2")
+                end
+            end
+            
+        else
+            numBestMoves = 0
+        end
+        bestmove_prev = best_move
+        bestscore_prev = value
         get_history(current_depth, b2, key, pv)
-        pv_search = [pv.history[i] for i in 1:1:current_depth]
-
         print("info score cp ", value,  " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1],  " time ",(round(Int64, time() *1000) - begin_time), " pv ") 
-       @inbounds for i in 1:1:current_depth
-            if pv_search[i] != MOVE_NULL
+        @inbounds for i in 1:1:5
+            if pv.history[i] != MOVE_NULL
 
-                print(tostring(pv_search[i]), " ")
+                print(tostring(pv.history[i]), " ")
             else
                 break
             end
         end  
         print("\n")
         if current_depth >= 6 && bench
-        println(" NPS ", key.nodes[1] ÷ ((round(Int64, time() *1000) - begin_time) / 1000),)
+            println(" NPS ", key.nodes[1] ÷ ((round(Int64, time() *1000) - begin_time) / 1000),)
         end
         if pv.debug
-            println("\npv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]"
+            println("pv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]"
                 ,"[ node1: ", key.nodes[1], " node2: ", key.nodes[2],  " node3: ", key.nodes[3], " node4: ", key.nodes[4], "]"
             )
         end
