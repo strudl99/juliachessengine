@@ -101,6 +101,10 @@ const ROOK_OPEN_FILE = 10
 const ROOK_SEMI_OPEN_FILE = 5
 const QUEEN_OPEN_FILE = 5
 const QUEEN_SEMI_OPEN_FILE = 3
+const KnightPhase = 1
+const BishopPhase = 1
+const RookPhase = 2
+const QueenPhase = 4
 #m = MoveList(200)
 function piece_value(b::Board, pv::Pv)::Int
     
@@ -143,7 +147,19 @@ function piece_value(b::Board, pv::Pv)::Int
     lbr = length(brook_squares)
     lbq = length(bqueen_squares)
     ## EVALUTAION
+    TotalPhase = KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
+    phase = TotalPhase
+    phase -= lwkn * KnightPhase
+    phase -= lwb  * BishopPhase
+    phase -= lwr  * RookPhase
+    phase -= lwq  * QueenPhase
+    phase -= lbkn * KnightPhase
+    phase -= lbb  * BishopPhase
+    phase -= lbr  * RookPhase
+    phase -= lbq  * QueenPhase
 
+    phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase
+    #print(phase)
     wMaterial = lwp * 100 + lwkn * 325 + lwb * 335 + lwr * 550 + lwq * 1000
     bMaterial = lbp * 100 + lbkn * 325 + lbb * 335 + lbr * 550 + lbq * 1000
     #println(wMaterial)
@@ -151,6 +167,7 @@ function piece_value(b::Board, pv::Pv)::Int
     score  = wMaterial - bMaterial
     @inbounds for i in 1:1:lwp
         score += pawn_square_table[convertToHorizontal[wpawn_squares[i].val]]::Int 
+        
         #score += squarecount(intersect(pawnattacks(WHITE, wpawn_squares[i]), pBLACK))
         if isempty(intersect(pv.white_passed_mask[convertToHorizontal[wpawn_squares[i].val]], bpawn))
             score += pawn_passed[rank(wpawn_squares[i]).val]
@@ -182,119 +199,137 @@ function piece_value(b::Board, pv::Pv)::Int
             score += ROOK_SEMI_OPEN_FILE
         end  
     end
-    if wMaterial <= 1350 || lwq == 0
-        score += king_endgame_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
-       # score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
-    else 
-     if wkings_squares[1] in SS_FILE_A
-            if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-            if pieceon(b, SquareFile(file(wkings_squares[1]).val + 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-        elseif wkings_squares[1] in SS_FILE_H
-            if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-            if pieceon(b, SquareFile(file(wkings_squares[1]).val - 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
+    eg_scoreWhite = score
+    # old engame check: wMaterial <= 1350 || lwq == 0
+    eg_scoreWhite += king_endgame_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
+    # score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
 
-        else
-            if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-            if pieceon(b, SquareFile(file(wkings_squares[1]).val - 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-            if pieceon(b, SquareFile(file(wkings_squares[1]).val + 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
-                score += 5
-            end
-        end 
-        score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
-    end
+    if wkings_squares[1] in SS_FILE_A
+        if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+        if pieceon(b, SquareFile(file(wkings_squares[1]).val + 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+    elseif wkings_squares[1] in SS_FILE_H
+        if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+        if pieceon(b, SquareFile(file(wkings_squares[1]).val - 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+
+    else
+        if pieceon(b, file(wkings_squares[1]), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+        if pieceon(b, SquareFile(file(wkings_squares[1]).val - 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+        if pieceon(b, SquareFile(file(wkings_squares[1]).val + 1), SquareRank((rank(wkings_squares[1] ).val) -1 )) == PIECE_WP
+            score += 5
+        end
+    end 
+    score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     
+    eg_scoreBlack = 0
     @inbounds for i in 1:1:lbp
         score -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
+        eg_scoreBlack -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
        # score -= squarecount(intersect(pawnattacks(BLACK, bpawn_squares[i]), pWHITE))
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], wpawn))
             score -= pawn_passed_black[rank(bpawn_squares[i]).val] 
+            eg_scoreBlack -= pawn_passed_black[rank(bpawn_squares[i]).val] 
             #println("PASSER : ", bpawn_squares[i])
         end
          if isempty(intersect(pv.isoloni_mask[mirror64[convertToHorizontal[bpawn_squares[i].val]]], bpawn))
             score -= ISOLATED_PAWN
+            eg_scoreBlack -= ISOLATED_PAWN
             #println("ISOLONI : ", bpawn_squares[i])
         end    
     end
     
     @inbounds for i in 1:1:lbkn
         score -= knight_square_table[mirror64[convertToHorizontal[bknights_squares[i].val]]]::Int
+        eg_scoreBlack -= knight_square_table[mirror64[convertToHorizontal[bknights_squares[i].val]]]::Int
         score -= squarecount(knightattacks(bknights_squares[i]))
+        eg_scoreBlack -= squarecount(knightattacks(bknights_squares[i]))
     end
     
     @inbounds for i in 1:1:lbb
         score -= bishop_square_table[mirror64[convertToHorizontal[bbishops_squares[i].val]]]::Int
+        eg_scoreBlack -= bishop_square_table[mirror64[convertToHorizontal[bbishops_squares[i].val]]]::Int
         score -= squarecount(bishopattacks(pBLACK ∪ pWHITE, bbishops_squares[i])) 
+        eg_scoreBlack -= squarecount(bishopattacks(pBLACK ∪ pWHITE, bbishops_squares[i])) 
     end
     
     @inbounds for i in 1:1:lbr
         score -= rook_square_table[mirror64[convertToHorizontal[brook_squares[i].val]]]
+        eg_scoreBlack -= rook_square_table[mirror64[convertToHorizontal[brook_squares[i].val]]]
         score -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
+        eg_scoreBlack -= squarecount(rookattacks(pBLACK ∪ pWHITE, brook_squares[i]))
          if isempty(intersect(allPawns, files[file(brook_squares[i]).val]))
             score -= ROOK_OPEN_FILE
+            eg_scoreBlack -= ROOK_OPEN_FILE
         elseif isempty(intersect(wpawn, files[file(brook_squares[i]).val]))
             score -= ROOK_SEMI_OPEN_FILE
+            eg_scoreBlack -= ROOK_SEMI_OPEN_FILE
         end   
     end
     
-    if bMaterial <= 1350 || (lbq == 0)
-        score -= king_endgame_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
+     # bMaterial <= 1350 || (lbq == 0)
+    eg_scoreBlack -= king_endgame_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
         #score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
+    if bkings_squares[1] in SS_FILE_A
+        if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+        if pieceon(b, SquareFile(file(bkings_squares[1]).val + 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+    elseif bkings_squares[1] in SS_FILE_H
+        if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+        if pieceon(b, SquareFile(file(bkings_squares[1]).val - 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
 
-    else 
-        if bkings_squares[1] in SS_FILE_A
-            if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-            if pieceon(b, SquareFile(file(bkings_squares[1]).val + 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-        elseif bkings_squares[1] in SS_FILE_H
-            if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-            if pieceon(b, SquareFile(file(bkings_squares[1]).val - 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-
-        else
-            if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-            if pieceon(b, SquareFile(file(bkings_squares[1]).val - 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-            if pieceon(b, SquareFile(file(bkings_squares[1]).val + 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
-                score -= 5
-            end
-        end 
-        score -= king_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
-        #score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
-    end
+    else
+        if pieceon(b, file(bkings_squares[1]), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+        if pieceon(b, SquareFile(file(bkings_squares[1]).val - 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+        if pieceon(b, SquareFile(file(bkings_squares[1]).val + 1), SquareRank((rank(bkings_squares[1] ).val) + 1 )) == PIECE_BP
+            score -= 5
+        end
+    end 
+    score -= king_square_table[mirror64[convertToHorizontal[bkings_squares[1].val]]]::Int
+    #score -= squarecount(intersect(kingattacks(bkings_squares[1]), pWHITE))
+    
     
     if lbb >= 2
         score -= 30
+        eg_scoreBlack -= 30
     end
     if lwb >= 2
         score += 30
+        eg_scoreWhite += 30
     end
+
+    eg_score = eg_scoreWhite + eg_scoreBlack
+    result = (score * (256 - phase) + eg_score * phase) / 256
+    #println(score)
+    #println(eg_score)
+    #println(result)
     if sidetomove(b) == WHITE
         #score += (movecount(b))
-        return score
+        return convert(Int64, round(result, digits=0))
     else
         #score -= (movecount(b))
-        return -score
+        return -convert(Int64, round(result, digits=0))
     end 
 end
 function evaluate_board(chessboard::Board, pv::Pv)::Int

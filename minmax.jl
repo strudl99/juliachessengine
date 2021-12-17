@@ -142,6 +142,11 @@ function quiescence(alpha::Int, beta::Int, chessboard::Board, color::Int, key::K
     if score >= beta
         return beta
     end
+
+    BIG_DELTA = 1000
+    if !ischeck(chessboard) && score < (alpha - BIG_DELTA)
+        return alpha
+    end 
     if score > alpha
         alpha = score
     end
@@ -255,7 +260,7 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
     
     @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move, false)
-        if i > 4 && depth <= 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
+        if i > 4 && depth < 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
             if pv.debug
                 global nullcut += 1
             end
@@ -350,7 +355,6 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     pv.side = side
     if timecontrol == true
         if pv.hisPly[threadid()] >= 30 && pv.hisPly[threadid()] <= 80 # Move 15 to 40 higher thinking time
-            println("MOVE 21")
             global playtime = side == WHITE ? white_time / 20 : black_time / 20
         else 
             global playtime = side == WHITE ? white_time / 30 : black_time / 30
