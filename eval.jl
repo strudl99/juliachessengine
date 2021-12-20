@@ -158,48 +158,59 @@ function piece_value(b::Board, pv::Pv)::Int
     phase -= lbr  * RookPhase
     phase -= lbq  * QueenPhase
 
-    phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase
+    phase = (phase * 32 + (TotalPhase / 2)) / TotalPhase
     #print(phase)
     wMaterial = lwp * 100 + lwkn * 325 + lwb * 335 + lwr * 550 + lwq * 1000
     bMaterial = lbp * 100 + lbkn * 325 + lbb * 335 + lbr * 550 + lbq * 1000
+    materialBalance = wMaterial - bMaterial
     #println(wMaterial)
     #println(bMaterial)
-    score  = wMaterial - bMaterial
+    eg_scoreWhite = materialBalance
+    score  = materialBalance
     @inbounds for i in 1:1:lwp
         score += pawn_square_table[convertToHorizontal[wpawn_squares[i].val]]::Int 
-        
+        eg_scoreWhite += pawn_square_table[convertToHorizontal[wpawn_squares[i].val]]::Int 
         #score += squarecount(intersect(pawnattacks(WHITE, wpawn_squares[i]), pBLACK))
         if isempty(intersect(pv.white_passed_mask[convertToHorizontal[wpawn_squares[i].val]], bpawn))
             score += pawn_passed[rank(wpawn_squares[i]).val]
+            eg_scoreWhite += pawn_passed[rank(wpawn_squares[i]).val]
                 #println(pawn_passed[rank(wpawn_squares[i]).val]) 
                # println("PASSER : ", wpawn_squares[i])
         end
          if isempty(intersect(pv.isoloni_mask[convertToHorizontal[wpawn_squares[i].val]], wpawn))
             score += ISOLATED_PAWN
+            eg_scoreWhite += ISOLATED_PAWN
             #println("ISOLONI : ", wpawn_squares[i])
         end  
     end
     
     @inbounds for i=1:1:lwkn
         score +=  knight_square_table[convertToHorizontal[wknights_squares[i].val]]::Int
+        eg_scoreWhite += knight_square_table[convertToHorizontal[wknights_squares[i].val]]::Int
         score += squarecount(knightattacks(wknights_squares[i]))
+        eg_scoreWhite += squarecount(knightattacks(wknights_squares[i]))
     end
     
     @inbounds for i= 1:1:lwb
         score += bishop_square_table[convertToHorizontal[wbishops_squares[i].val]]::Int
+        eg_scoreWhite += bishop_square_table[convertToHorizontal[wbishops_squares[i].val]]::Int
         score += squarecount(bishopattacks(pBLACK ∪ pWHITE, wbishops_squares[i])) 
+        eg_scoreWhite += squarecount(bishopattacks(pBLACK ∪ pWHITE, wbishops_squares[i])) 
     end
     
     @inbounds for i in 1:1:lwr
         score += rook_square_table[convertToHorizontal[wrook_squares[i].val]]
+        eg_scoreWhite += rook_square_table[convertToHorizontal[wrook_squares[i].val]]
         score += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
+        eg_scoreWhite += squarecount(rookattacks(pBLACK ∪ pWHITE, wrook_squares[i]))
            if isempty(intersect(allPawns, files[file(wrook_squares[i]).val]))
             score += ROOK_OPEN_FILE
+            eg_scoreWhite += ROOK_OPEN_FILE
         elseif isempty(intersect(bpawn, files[file(wrook_squares[i]).val]))
             score += ROOK_SEMI_OPEN_FILE
+            eg_scoreWhite += ROOK_SEMI_OPEN_FILE
         end  
     end
-    eg_scoreWhite = score
     # old engame check: wMaterial <= 1350 || lwq == 0
     eg_scoreWhite += king_endgame_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     # score += squarecount(intersect(kingattacks(wkings_squares[1]), pBLACK))
@@ -232,7 +243,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end 
     score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     
-    eg_scoreBlack = 0
+    eg_scoreBlack = materialBalance
     @inbounds for i in 1:1:lbp
         score -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
         eg_scoreBlack -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
@@ -320,10 +331,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end
 
     eg_score = eg_scoreWhite + eg_scoreBlack
-    result = (score * (256 - phase) + eg_score * phase) / 256
-    #println(score)
-    #println(eg_score)
-    #println(result)
+    result = (score * (32 - phase) + eg_score * phase) / 32
     if sidetomove(b) == WHITE
         #score += (movecount(b))
         return convert(Int64, round(result, digits=0))
