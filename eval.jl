@@ -52,7 +52,7 @@ const rook_square_table = [
 
 const king_square_table = 
 [
-    0,	0,	-10, -10, 0,0, 20, 5,
+    0,	0,	-10, -10, -10,0, 20, 5,
 	-30,-30,-30,-30,-30,-30,-30,-30,
 	-50,-50,-50,-50,-50,-50,-50,-50,
 	-70,-70,-70,-70,-70,-70,-70,-70,
@@ -165,7 +165,7 @@ function piece_value(b::Board, pv::Pv)::Int
     materialBalance = wMaterial - bMaterial
     #println(wMaterial)
     #println(bMaterial)
-    eg_scoreWhite = materialBalance
+    eg_scoreWhite = 0
     score  = materialBalance
     @inbounds for i in 1:1:lwp
         score += pawn_square_table[convertToHorizontal[wpawn_squares[i].val]]::Int 
@@ -243,7 +243,7 @@ function piece_value(b::Board, pv::Pv)::Int
     end 
     score += king_square_table[convertToHorizontal[wkings_squares[1].val]]::Int
     
-    eg_scoreBlack = materialBalance
+    eg_scoreBlack = 0
     @inbounds for i in 1:1:lbp
         score -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
         eg_scoreBlack -= pawn_square_table[mirror64[convertToHorizontal[bpawn_squares[i].val]]]::Int
@@ -330,7 +330,12 @@ function piece_value(b::Board, pv::Pv)::Int
         eg_scoreWhite += 30
     end
 
-    eg_score = eg_scoreWhite + eg_scoreBlack
+    eg_score = (eg_scoreWhite + eg_scoreBlack) + materialBalance
+  #=   println(eg_score)
+    println(eg_scoreWhite)
+    println(eg_scoreBlack)
+    println(materialBalance)
+    println(score) =#
     result = (score * (32 - phase) + eg_score * phase) / 32
     if sidetomove(b) == WHITE
         #score += (movecount(b))
