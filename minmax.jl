@@ -260,7 +260,7 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
     
     @inbounds for i in 1:1:leg.count
         pick_next_move_fast(chessboard, i, pv, leg, pv_move, false)
-        if i > 4 && depth < 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
+        if i > 4 && depth <= 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
             if pv.debug
                 global nullcut += 1
             end
