@@ -105,8 +105,9 @@ const KnightPhase = 1
 const BishopPhase = 1
 const RookPhase = 2
 const QueenPhase = 4
+const TotalPhase = KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
 #m = MoveList(200)
-function piece_value(b::Board, pv::Pv)::Int
+function piece_value(b::Board, pv::Pv)
     
 
     pWHITE = pieces(b, WHITE)
@@ -147,19 +148,22 @@ function piece_value(b::Board, pv::Pv)::Int
     lbr = length(brook_squares)
     lbq = length(bqueen_squares)
     ## EVALUTAION
-    TotalPhase = KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
-    phase = TotalPhase
-    phase -= lwkn * KnightPhase
-    phase -= lwb  * BishopPhase
-    phase -= lwr  * RookPhase
-    phase -= lwq  * QueenPhase
-    phase -= lbkn * KnightPhase
-    phase -= lbb  * BishopPhase
-    phase -= lbr  * RookPhase
-    phase -= lbq  * QueenPhase
+    
+    phase = 0
+    phase += lwkn * KnightPhase
+    phase += lwb  * BishopPhase
+    phase += lwr  * RookPhase
+    phase += lwq  * QueenPhase
+    phase += lbkn * KnightPhase
+    phase += lbb  * BishopPhase
+    phase += lbr  * RookPhase
+    phase += lbq  * QueenPhase
 
-    phase = (phase * 32 + (TotalPhase / 2)) / TotalPhase
-    #print(phase)
+    if phase > 24
+        phase = 24
+    end
+    eg_phase = 24 - phase 
+    #println(phase)
     wMaterial = lwp * 100 + lwkn * 325 + lwb * 335 + lwr * 550 + lwq * 1000
     bMaterial = lbp * 100 + lbkn * 325 + lbb * 335 + lbr * 550 + lbq * 1000
     materialBalance = wMaterial - bMaterial
@@ -331,12 +335,11 @@ function piece_value(b::Board, pv::Pv)::Int
     end
 
     eg_score = (eg_scoreWhite + eg_scoreBlack) + materialBalance
-  #=   println(eg_score)
-    println(eg_scoreWhite)
-    println(eg_scoreBlack)
-    println(materialBalance)
-    println(score) =#
-    result = (score * (32 - phase) + eg_score * phase) / 32
+    #= println("EG Score: ", eg_score)
+    println("Score: ", score)
+    println("Phase: ", phase)
+    println("EG_Phase: ", eg_phase) =#
+    result = (score * phase + eg_score * eg_phase) / 24
     if sidetomove(b) == WHITE
         #score += (movecount(b))
         return convert(Int64, round(result, digits=0))
