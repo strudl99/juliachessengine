@@ -10,6 +10,6 @@ then
         julia -t 1 $TEST
     fi
 else
-    julia -t 1 $TEST
-fi
+    julia -t 2 $TEST
+fi 
 

@@ -62,7 +62,7 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
     @inbounds for i in move_num:1:m.count
         moveto = pieceon(chessboard, to(m[i]))
         value = Int64(0)
-        if !quiescenceBool
+        if !quiescenceBool # && threadid() == 1
             if pvmove != MOVE_NULL && pvmove == m[i]
                 if pv.debug
                     global pvmovecut += 1
@@ -111,15 +111,22 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
 end
 
 function strudlmove!(chessboard, move, pv)
-    u = domove!(chessboard, move)
-    pv.repetition[pv.hisPly[threadid()] + 1, threadid()] = chessboard.key
-    pv.hisPly[threadid()] += 1
-    pv.ply[threadid()] += 1
-    return u
+    try
+        u = domove!(chessboard, move)
+        pv.repetition[pv.hisPly[threadid()] + 1, threadid()] = chessboard.key
+        pv.hisPly[threadid()] += 1
+        pv.ply[threadid()] += 1
+        return u
+    catch e
+        println(chessboard, move)
+        throw(e)
+    end
+    
+    
 end
 
 function undostrudlmove!(chessboard, undoinfo, pv)
-    pv.repetition[pv.hisPly[threadid()] + 1, threadid()] = 0
+    #pv.repetition[pv.hisPly[threadid()] + 1, threadid()] = 0
     pv.hisPly[threadid()] -= 1
     pv.ply[threadid()] -= 1
     undomove!(chessboard, undoinfo)
@@ -247,9 +254,10 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
         end
     end 
     
-    if check
+    if check 
         depth += 1
     end
+
     movelist = lists[pv.ply[threadid()]]
     recycle!(movelist)
     leg = moves(chessboard, movelist)
@@ -259,7 +267,9 @@ function negamax(depth, initalDepth,alpha::Int, beta::Int, chessboard, color, nu
     eval = evaluate_board(chessboard, pv)
     
     @inbounds for i in 1:1:leg.count
+        
         pick_next_move_fast(chessboard, i, pv, leg, pv_move, false)
+        
         if i > 4 && depth <= 6 && depth > 1 && (pieceon(chessboard, to(leg[i])) == EMPTY) && !ispromotion(leg[i]) && !check && !foundPv && (pv_move == MOVE_NULL) && big_piece(chessboard)
             if pv.debug
                 global nullcut += 1
@@ -365,6 +375,9 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     max_death = depth
     best_move = MOVE_NULL
     lists1 = Array{MoveList, 1}(undef, 1)
+    lists2 = Array{MoveList, 1}(undef, 1)
+    lists3 = Array{MoveList, 1}(undef, 1)
+    lists4 = Array{MoveList, 1}(undef, 1)
     for i in 1:1:4
         key.nodes[i] = 0
     end
@@ -372,8 +385,14 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     for i ∈ 1:(40)
         if i == 1
             lists1[1] = MoveList(200)
+            lists2[1] = MoveList(200)
+            lists3[1] = MoveList(200)
+            lists4[1] = MoveList(200)
         else
             push!(lists1, MoveList(200))
+            push!(lists2, MoveList(200))
+            push!(lists3, MoveList(200))
+            push!(lists4, MoveList(200))
         end
     end
     bestmove_prev = MOVE_NULL
@@ -382,7 +401,6 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     playtimeBool = true
     @inbounds for current_depth in 1:1:max_death - 1
         global calculating = true
-        chessboard = fromfen(fen(board)) 
         global begin_time = round(Int64, time() * 1000)
         if pv.debug
             global hashcut = 0
@@ -395,18 +413,32 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         end
        # global hashcut = 0
         
-        b1 = fromfen(fen(chessboard))
-        b2 = fromfen(fen(chessboard))
+        b1 = deepcopy(board)
+        b2 = deepcopy(board)
+        b3 = deepcopy(board)
+        b4 = deepcopy(board)
         global timeover = false
-        value = negamax(current_depth, current_depth,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+        c1 = current_depth
+        c2 = current_depth
+        v1 = @spawn negamax($c1, $c1,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, $lists1)
+        v2 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, $lists2)
+        v3 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b3, side == WHITE ? 1 : -1, true, pv, key, $lists3)
+        v4 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b4, side == WHITE ? 1 : -1, true, pv, key, $lists4)
+        #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists3)
+        #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists4)
+        value = fetch(v1)
+        global calculating = false
+        wait(v2)
+        wait(v3)
+        wait(v4)
         if calculating == false && timeover == true
             break
         end
-        best_move = probe_Pv_Table(chessboard, key, pv)
+        best_move = probe_Pv_Table(board, key, pv)
         if current_depth >= 5 && best_move.val == bestmove_prev.val
             numBestMoves += 1
-            if pieceon(chessboard, to(best_move)) != EMPTY
-                if playtimeBool && numBestMoves >= 3 && pv.mvvlva_scores[ptype(pieceon(chessboard, to(best_move))).val, ptype(pieceon(chessboard, from(best_move))).val] > 300
+            if pieceon(board, to(best_move)) != EMPTY
+                if playtimeBool && numBestMoves >= 3 && pv.mvvlva_scores[ptype(pieceon(board, to(best_move))).val, ptype(pieceon(board, from(best_move))).val] > 300
                     global playtime /= 3
                     playtimeBool = false
                     println("Playtime down 3")

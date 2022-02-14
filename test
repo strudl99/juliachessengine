@@ -1,42 +1,40 @@
 rnbqk1nr/p4p2/8/1pppp1pp/2P1Pb2/2BP1N2/PP3PPP/RN1QKB1R w KQkq - 0 1
-with isolated pawn improvement:
-info score cp 205 currmove: cxd5 depth 1 nodes 49 time 0.062375301 pv c4d5     
-info score cp 155 currmove: cxd5 depth 2 nodes 331 time 0.0024396 pv c4d5 g8f6 
-info score cp 285 currmove: cxd5 depth 3 nodes 1443 time 0.023154199 pv c4d5 b8d7 f3g5 
-info score cp 110 currmove: exd5 depth 4 nodes 13723 time 0.17022039900000002 pv e4d5 g8f6 f3e5 
-info score cp 275 currmove: exd5 depth 5 nodes 13309 time 0.201686299 pv e4d5 g8f6 f3g5 
-info score cp 155 currmove: cxd5 depth 6 nodes 123102 time 1.0732332 pv c4d5 c8g4 h2h3 
-info score cp 200 currmove: cxd5 depth 7 nodes 538895 time 4.126019201 pv c4d5 b8d7 f3g5
+info score cp 185 currmove c4d5 depth 1 nodes 92 time 583 pv c4d5
+info score cp 165 currmove c4d5 depth 2 nodes 960 time 2 pv c4d5 c8g4
+info score cp 187 currmove c4d5 depth 3 nodes 3077 time 9 pv c4d5 c8g4 f1e2
+info score cp 200 currmove c4d5 depth 4 nodes 12988 time 22 pv c4d5 c8g4 h2h3 g4f3
+info score cp 208 currmove c4d5 depth 5 nodes 37320 time 44 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 6 nodes 113092 time 321 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 7 nodes 357140 time 381 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 8 nodes 915706 time 843 pv c4d5 b8d7 g2g3 b5b4 g3f4
 
 
-info score cp 243 currmove: cxd5 depth 1 nodes 50 time 0.015873 pv c4d5 
-info score cp 193 currmove: cxd5 depth 2 nodes 327 time 0.0007631000000000001 pv c4d5 g8f6 
-info score cp 308 currmove: cxd5 depth 3 nodes 1438 time 0.0037080000000000004 pv c4d5 f7f6 b1d2 
-info score cp 158 currmove: exd5 depth 4 nodes 9892 time 0.021056400000000003 pv e4d5 g8f6 f3e5 
-info score cp 278 currmove: exd5 depth 5 nodes 12860 time 0.044208000000000004 pv e4d5 c8g4 c4b5 
-info score cp 220 currmove: cxd5 depth 6 nodes 80055 time 0.3368699 pv c4d5 c8g4 h2h3 
-info score cp 313 currmove: cxd5 depth 7 nodes 177541 time 0.5001881 pv c4d5 c8g4 d1b3 
-info score cp 233 currmove: exd5 depth 8 nodes 412064 time 1.0727533 pv e4d5 g8f6 g2g3 
+info score cp 185 currmove c4d5 depth 1 nodes 92 time 406 pv c4d5
+info score cp 165 currmove c4d5 depth 2 nodes 923 time 1 pv c4d5 c8g4
+info score cp 187 currmove c4d5 depth 3 nodes 3100 time 35 pv c4d5 c8g4 f1e2
+info score cp 200 currmove c4d5 depth 4 nodes 12654 time 15 pv c4d5 c8g4 h2h3 g4f3
+info score cp 208 currmove c4d5 depth 5 nodes 36818 time 47 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 6 nodes 127276 time 188 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 7 nodes 373041 time 446 pv c4d5 b8d7 g2g3 b5b4 g3f4
+info score cp 208 currmove c4d5 depth 8 nodes 928771 time 958 pv c4d5 b8d7 g2g3 b5b4 g3f4
 
-Eval benchmark 
-BenchmarkTools.Trial: 
-  memory estimate:  2.80 KiB
-  allocs estimate:  91
-  --------------
-  minimum time:     2.311 μs (0.00% GC)
-  median time:      2.422 μs (0.00% GC)
-  mean time:        2.924 μs (7.46% GC)
-  maximum time:     588.600 μs (99.28% GC)
-  --------------
-  samples:          10000
-  evals/sample:     9
+## One Thread
+info score cp 185 currmove c4d5 depth 1 nodes 93 time 503 pv c4d5 
+info score cp 165 currmove c4d5 depth 2 nodes 962 time 1 pv c4d5 c8g4 
+info score cp 187 currmove c4d5 depth 3 nodes 3150 time 4 pv c4d5 c8g4 f1e2 
+info score cp 200 currmove c4d5 depth 4 nodes 12813 time 16 pv c4d5 c8g4 h2h3 g4f3 
+info score cp 208 currmove c4d5 depth 5 nodes 35558 time 34 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 6 nodes 126575 time 288 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 7 nodes 374974 time 275 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 8 nodes 939482 time 585 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 243 currmove c4d5 depth 9 nodes 2483873 time 1825 pv c4d5 b8d7 g2g3 b5b4 g3f4
 
-4 threads one mutex
-info score cp 185 currmove c4d5 depth 1 nodes 366 time 562 pv c4d5 
-info score cp 165 currmove c4d5 depth 2 nodes 3178 time 2 pv c4d5 c8g4 
-info score cp 187 currmove c4d5 depth 3 nodes 10015 time 4 pv c4d5 c8g4 f1e2 
-info score cp 200 currmove c4d5 depth 4 nodes 45477 time 20 pv c4d5 c8g4 h2h3 g4f3 
-info score cp 200 currmove c4d5 depth 5 nodes 113472 time 38 pv c4d5 c8g4 h2h3 g4f3 d1f3 
-info score cp 208 currmove c4d5 depth 6 nodes 542601 time 424 pv c4d5 b8d7 g2g3 b5b4 g3f4 b4c3 
-info score cp 208 currmove c4d5 depth 7 nodes 2015144 time 1015 pv c4d5 b8d7 g2g3 b5b4 g3f4 b4c3 
-info score cp 208 currmove c4d5 depth 8 nodes 8130757 time 4523 pv c4d5 b8d7 f3e5 b5b4 g3f4 b4c3 
+## Two threads
+info score cp 185 currmove c4d5 depth 1 nodes 92 time 530 pv c4d5 
+info score cp 165 currmove c4d5 depth 2 nodes 960 time 2 pv c4d5 c8g4 
+info score cp 187 currmove c4d5 depth 3 nodes 3145 time 4 pv c4d5 c8g4 f1e2 
+info score cp 200 currmove c4d5 depth 4 nodes 12555 time 17 pv c4d5 c8g4 h2h3 g4f3 
+info score cp 208 currmove c4d5 depth 5 nodes 36017 time 43 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 6 nodes 127330 time 319 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 7 nodes 376676 time 378 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 208 currmove c4d5 depth 8 nodes 932902 time 798 pv c4d5 b8d7 g2g3 b5b4 g3f4 
