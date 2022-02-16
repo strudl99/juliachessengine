@@ -106,6 +106,87 @@ const BishopPhase = 1
 const RookPhase = 2
 const QueenPhase = 4
 const TotalPhase = KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
+const SHIELD1 = 10
+const SHIELD2 = 5
+function wKingShield(b::Board)
+    Score = 0
+    ## If the king is castled on the kingside
+    if file(Square(b.ksq[1])) > FILE_E
+        if pieceon(b, SQ_F2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_F3) == PIECE_WP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_G2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_G3) == PIECE_WP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_H2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_H3) == PIECE_WP
+            Score += SHIELD2
+        end
+    ## If castled on the queenside
+    elseif file(Square(b.ksq[1])) < FILE_D
+        if pieceon(b, SQ_A2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_A3) == PIECE_WP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_B2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_B3) == PIECE_WP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_C2) == PIECE_WP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_C3) == PIECE_WP
+            Score += SHIELD2
+        end
+    end
+    return Score
+end
+
+function bKingShield( b::Board)
+    ## If the king is castled on the kingside
+    Score = 0
+    if file(Square(b.ksq[2])) > FILE_E
+        if pieceon(b, SQ_F7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_F6) == PIECE_BP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_G7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_G6) == PIECE_BP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_H7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_H6) == PIECE_BP
+            Score += SHIELD2
+        end
+    ## If castled on the queenside
+    elseif file(Square(b.ksq[2])) < FILE_D
+        if pieceon(b, SQ_A7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_A6) == PIECE_BP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_B7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_B6) == PIECE_BP
+            Score += SHIELD2
+        end
+        if pieceon(b, SQ_C7) == PIECE_BP
+            Score += SHIELD1
+        elseif pieceon(b, SQ_C6) == PIECE_BP
+            Score += SHIELD2
+        end
+    end
+    return Score
+end
 
 function pstEvalWhite(b::Board, pv::Pv)
     Score =   0
@@ -139,6 +220,12 @@ function pstEvalWhite(b::Board, pv::Pv)
     @inbounds for square in rooks(b, WHITE)
         Score += rook_square_table[convertToHorizontal[square.val]]::Int 
         Rooks += 1
+
+        if isempty(intersect(pawns(b), files[file(square).val]))
+            Score += ROOK_OPEN_FILE
+        elseif isempty(intersect(pawns(b, WHITE), files[file(square).val]))
+            Score += ROOK_SEMI_OPEN_FILE
+        end   
     end
     if !isempty(queens(b, WHITE))
         Queen = 1
@@ -148,6 +235,10 @@ function pstEvalWhite(b::Board, pv::Pv)
 
     @inbounds for square in kings(b, WHITE)
         mg += king_square_table[convertToHorizontal[square.val]]
+        # King Safety
+        mg += wKingShield(b)
+
+
         eg += king_endgame_square_table[convertToHorizontal[square.val]]
     end
 
@@ -164,27 +255,32 @@ function pstEvalBlack(b::Board, pv::Pv)
     Queen =   0
     ## Pawn evaluation with passed pawn and isolani
     @inbounds for square in pawns(b, BLACK)
-        Score -= pawn_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
+        Score += pawn_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
         Pawns += 1
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[square.val]]], pawns(b, WHITE)))
-            Score -= pawn_passed_black[rank(square).val] 
+            Score += pawn_passed_black[rank(square).val] 
         end
          if isempty(intersect(pv.isoloni_mask[mirror64[convertToHorizontal[square.val]]], pawns(b, BLACK)))
-            Score -= ISOLATED_PAWN
+            Score += ISOLATED_PAWN
             #println("ISOLONI : ", bpawn_squares[i])
         end    
     end
     @inbounds for square in bishops(b, BLACK)
-        Score -= bishop_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
+        Score += bishop_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
         Bishops += 1
     end
     @inbounds for square in knights(b, BLACK)
-        Score -= knight_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
+        Score += knight_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
         Knights += 1
     end
     @inbounds for square in rooks(b, BLACK)
-        Score -= rook_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
+        Score += rook_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
         Rooks += 1
+        if isempty(intersect(pawns(b), files[file(square).val]))
+            Score += ROOK_OPEN_FILE
+        elseif isempty(intersect(pawns(b, BLACK), files[file(square).val]))
+            Score += ROOK_SEMI_OPEN_FILE
+        end   
     end
     if !isempty(queens(b, BLACK))
         Queen = 1
@@ -193,11 +289,12 @@ function pstEvalBlack(b::Board, pv::Pv)
     eg = Score
 
     @inbounds for square in kings(b, BLACK)
-        mg -= king_square_table[mirror64[convertToHorizontal[square.val]]]
-        eg -= king_endgame_square_table[mirror64[convertToHorizontal[square.val]]]
+        mg += king_square_table[mirror64[convertToHorizontal[square.val]]]
+        mg += bKingShield(b)
+        eg += king_endgame_square_table[mirror64[convertToHorizontal[square.val]]]
     end
 
-    return mg, eg, Pawns, Bishops, Knights, Rooks, Queen
+    return -mg, -eg, Pawns, Bishops, Knights, Rooks, Queen
 
 end
 
@@ -206,24 +303,32 @@ function evaluate_board(b::Board, pv::Pv)
     bMg, bEg, bP, bB, bK, bR, bQ = pstEvalBlack(b, pv)
     wMaterial = wP * 100 + wK * 325 + wB * 335 + wR * 550 + wQ * 1000
     bMaterial = bP * 100 + bK * 325 + bB * 335 + bR * 550 + bQ * 1000
+    #println(bMg)
+    #println(wMg)
     materialBalance = wMaterial - bMaterial
     mgScore = (wMg + bMg) + materialBalance
     egScore = (wEg + bEg) + materialBalance
-    phase = 0
-    phase += wK * KnightPhase
-    phase += wB  * BishopPhase
-    phase += wR  * RookPhase
-    phase += wQ  * QueenPhase
-    phase += bK * KnightPhase
-    phase += bB  * BishopPhase
-    phase += bR  * RookPhase
-    phase += bQ  * QueenPhase
-
+    phase = TotalPhase
+    phase -= wK * KnightPhase
+    phase -= wB  * BishopPhase
+    phase -= wR  * RookPhase
+    phase -= wQ  * QueenPhase
+    phase -= bK * KnightPhase
+    phase -= bB  * BishopPhase
+    phase -= bR  * RookPhase
+    phase -= bQ  * QueenPhase
     if phase > 24
         phase = 24
     end
-    eg_phase = 24 - phase 
-    result = (mgScore * phase + egScore * eg_phase) / 24
+    eg_phase = phase
+    mg_phase = 24 - phase 
+#=     println(eg_phase)
+    println(mg_phase)  =#
+    #println(mgScore)
+    #println(egScore)
+    #
+    result = (mgScore * mg_phase + egScore * eg_phase) / 24
+    #println(result)
     if sidetomove(b) == WHITE
         #score += (movecount(b))
         return convert(Int64, round(result, digits=0))
