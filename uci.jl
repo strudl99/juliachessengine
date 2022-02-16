@@ -20,7 +20,7 @@ function uciCommunication(engine=nothing)
     key,  pv = init()
     if engine !== nothing
         board = fromfen("r1b1k2r/ppn1ppbp/2n3p1/2P5/2N1P3/4BN2/5PPP/1R2KB1R b Kkq - 3 16")
-        move =  calc_best_move(board, 7, pv, key, 0)
+        move =  calc_best_move(board, 9, pv, key, 0)
     else
         while true
             input = split(readline())
