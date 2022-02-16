@@ -1,7 +1,8 @@
 using Chess, Chess.Book
 using Base.Threads: @spawn, threadid, SpinLock
 
-include("eval.jl")
+#include("eval.jl")
+include("psteval.jl")
 stop = false::Bool
 calculating = true::Bool
 begin_time = 0::Int
@@ -62,7 +63,7 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
     @inbounds for i in move_num:1:m.count
         moveto = pieceon(chessboard, to(m[i]))
         value = Int64(0)
-        if !quiescenceBool # && threadid() == 1
+        if !quiescenceBool  && threadid() == 1
             if pvmove != MOVE_NULL && pvmove == m[i]
                 if pv.debug
                     global pvmovecut += 1
@@ -412,25 +413,14 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
             global nullcut = 0
         end
        # global hashcut = 0
-        
         b1 = deepcopy(board)
         b2 = deepcopy(board)
-        b3 = deepcopy(board)
-        b4 = deepcopy(board)
         global timeover = false
         c1 = current_depth
-        c2 = current_depth
-        v1 = @spawn negamax($c1, $c1,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, $lists1)
-        v2 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b2, side == WHITE ? 1 : -1, true, pv, key, $lists2)
-        v3 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b3, side == WHITE ? 1 : -1, true, pv, key, $lists3)
-        v4 = @spawn negamax($c2, $c2,-pv.INF , pv.INF, b4, side == WHITE ? 1 : -1, true, pv, key, $lists4)
+        value = negamax(c1, c1,-pv.INF , pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+
         #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists3)
         #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists4)
-        value = fetch(v1)
-        global calculating = false
-        wait(v2)
-        wait(v3)
-        wait(v4)
         if calculating == false && timeover == true
             break
         end
