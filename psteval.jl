@@ -188,6 +188,17 @@ function bKingShield( b::Board)
     return Score
 end
 
+function isPawnSupported(b::Board, square::Square, side)
+    shiftSquareSet = side == WHITE ? shift_s(SquareSet(square)) : shift_n(SquareSet(square))
+    if !isempty(intersect(shift_w(shiftSquareSet), pawns(b, side)))
+        return true
+    end
+    if !isempty(intersect(shift_e(shiftSquareSet), pawns(b, side)))
+        return true
+    end
+    return false
+
+end
 function pstEvalWhite(b::Board, pv::Pv)
     Score =   0
     Pawns =   0
@@ -199,8 +210,15 @@ function pstEvalWhite(b::Board, pv::Pv)
     @inbounds for square in pawns(b, WHITE)
         Score += pawn_square_table[convertToHorizontal[square.val]]::Int 
         Pawns += 1
+        if !isPawnSupported(b, square, WHITE)
+            Score -= 5
+        end
         if isempty(intersect(pv.white_passed_mask[convertToHorizontal[square.val]], pawns(b, BLACK)))
-            Score += pawn_passed[rank(square).val]
+            if isPawnSupported(b, square, WHITE)
+                Score += convert(Int64, round((pawn_passed[rank(square).val] * 10) / 8, digits=0))
+            else
+                Score += pawn_passed[rank(square).val]
+            end
                 #println(pawn_passed[rank(wpawn_squares[i]).val]) 
                # println("PASSER : ", wpawn_squares[i])
         end
@@ -260,8 +278,15 @@ function pstEvalBlack(b::Board, pv::Pv)
     @inbounds for square in pawns(b, BLACK)
         Score += pawn_square_table[mirror64[convertToHorizontal[square.val]]]::Int 
         Pawns += 1
+        if !isPawnSupported(b, square, BLACK)
+            Score -= 5
+        end
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[square.val]]], pawns(b, WHITE)))
-            Score += pawn_passed_black[rank(square).val] 
+            if isPawnSupported(b, square, BLACK)
+                Score += convert(Int64, round((pawn_passed_black[rank(square).val] * 10) / 8, digits=0))
+            else
+                Score += pawn_passed_black[rank(square).val] 
+            end
         end
          if isempty(intersect(pv.isoloni_mask[mirror64[convertToHorizontal[square.val]]], pawns(b, BLACK)))
             Score += ISOLATED_PAWN
