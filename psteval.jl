@@ -215,7 +215,7 @@ function pstEvalWhite(b::Board, pv::Pv)
         end
         if isempty(intersect(pv.white_passed_mask[convertToHorizontal[square.val]], pawns(b, BLACK)))
             if isPawnSupported(b, square, WHITE)
-                Score += convert(Int64, round((pawn_passed[rank(square).val] * 10) / 8, digits=0))
+                Score += convert(Int64, round((pawn_passed[rank(square).val] * 2) / 8, digits=0))
             else
                 Score += pawn_passed[rank(square).val]
             end
@@ -283,7 +283,7 @@ function pstEvalBlack(b::Board, pv::Pv)
         end
         if isempty(intersect(pv.black_passed_mask[mirror64[convertToHorizontal[square.val]]], pawns(b, WHITE)))
             if isPawnSupported(b, square, BLACK)
-                Score += convert(Int64, round((pawn_passed_black[rank(square).val] * 10) / 8, digits=0))
+                Score += convert(Int64, round((pawn_passed_black[rank(square).val] * 2) / 8, digits=0))
             else
                 Score += pawn_passed_black[rank(square).val] 
             end
