@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-TEST="/home/manuel/juliachessengine/"
+TEST="/home/manuel/Dokumente/juliachessengine/"
 TEST+="uci.jl"
 if [ ! -z "$1" ];
 then
@@ -10,4 +10,5 @@ then
     fi
 else
     julia -t 1 $TEST
-fi
+fi 
+
