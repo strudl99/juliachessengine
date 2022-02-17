@@ -459,7 +459,8 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         end  
         print("\n")
         if current_depth >= 6 && bench
-            println(" NPS ", key.nodes[1] ÷ ((round(Int64, time() *1000) - begin_time) / 1000),)
+            nps = convert(BigInt, key.nodes[1] ÷ ((round(Int64, time() * 1000) - begin_time) / 1000))
+            println(" NPS ", nps)
         end
         if pv.debug
             println("pv.debug [nullcut : ", nullcut, ", hashcut : ", hashcut, ", killers : ", killers, ", new_write : ", new_write , ", over_write : ", over_write , ", hashtablehit : ",  hashtablehit," pvmovecut : ", pvmovecut, "]"
