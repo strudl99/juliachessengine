@@ -4,7 +4,6 @@ TEST+="uci.jl"
 if [ ! -z "$1" ];
 then
     if [ $1 = 'bench' ]; then
-        echo $TEST
         julia -t 1 $TEST bench
     else
         julia -t 1 $TEST
