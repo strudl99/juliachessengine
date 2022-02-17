@@ -31,8 +31,20 @@ function commands()
             println(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6)
             b = fromfen(string(string1, " ", string2, " ", string3, " ", string4, " ", string5, " ", string6))
         end
-        if "repetition" in input
+        if "rep" in input
+            pv.repetition[pv.hisPly[1] + 1] = b.key
+            pv.hisPly[1] += 1
+            strudlmove!(b, Move(SQ_B1, SQ_C3), pv)
+            strudlmove!(b, Move(SQ_B8, SQ_C6), pv)
+            strudlmove!(b, Move(SQ_C3, SQ_B1), pv) 
+            strudlmove!(b, Move(SQ_C6, SQ_B8), pv)
+            strudlmove!(b, Move(SQ_A7, SQ_A6), pv)
+            strudlmove!(b, Move(SQ_B1, SQ_C3), pv)
+            strudlmove!(b, Move(SQ_B8, SQ_C6), pv)
+            strudlmove!(b, Move(SQ_C3, SQ_B1), pv) 
+            strudlmove!(b, Move(SQ_C6, SQ_B8), pv)
             println(repetition(b, pv, 1))
+            #println(pv.repetition)
         end
         if "search" in input
             i = indexin(["search"], input)[1]

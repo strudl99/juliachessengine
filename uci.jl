@@ -14,7 +14,7 @@ end
 
 
 function uciCommunication(engine=nothing)
-    ENINGENAME = "strudlsjuliachessv1.0"
+    ENINGENAME = "strudlsjuliachessv2.0"
     AUTHOR = "strudl"
     board = startboard()
     key,  pv = init()

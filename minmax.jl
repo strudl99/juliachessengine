@@ -20,8 +20,9 @@ hashtablehit = 0
 # pv_move =
 
 function repetition(chessboard, pv::Pv, ply)::Bool
-    #println(pv.hisPly[1] - chessboard.r50, pv.hisPly[1] - 2)
-    @inbounds for i = 0:1:pv.hisPly[1] - 2
+    #println(pv.hisPly[1] - chessboard.r50)
+    #println(chessboard.r50)
+    @inbounds for i = (pv.hisPly[1] - chessboard.r50) - 1:1:pv.hisPly[1] - 2
         if chessboard.key == pv.repetition[i + 1, 1]
             return true
         end 
@@ -114,7 +115,7 @@ end
 function strudlmove!(chessboard, move, pv)
     try
         u = domove!(chessboard, move)
-        pv.repetition[pv.hisPly[1] + 1, 1] = chessboard.key
+        pv.repetition[pv.hisPly[1] + 1] = chessboard.key
         pv.hisPly[1] += 1
         pv.ply[1] += 1
         return u
@@ -357,7 +358,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
     bookmove = nothing
 
-    bookmove = pickbookmove(board, minscore=20, mingamecount=30) 
+    bookmove = pickbookmove(board, minscore=30, mingamecount=30) 
     if bookmove !== nothing
         return bookmove
     end

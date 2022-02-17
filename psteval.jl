@@ -230,6 +230,9 @@ function pstEvalWhite(b::Board, pv::Pv)
     if !isempty(queens(b, WHITE))
         Queen = 1
     end
+    if Bishops == 2
+        Score += 30
+    end
     mg = Score
     eg = Score
 
@@ -284,6 +287,9 @@ function pstEvalBlack(b::Board, pv::Pv)
     end
     if !isempty(queens(b, BLACK))
         Queen = 1
+    end
+    if Bishops == 2
+        Score += 30
     end
     mg = Score
     eg = Score
