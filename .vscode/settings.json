@@ -1,5 +1,4 @@
 {
   "python.pythonPath": ".venv/bin/python3.6",
-  "julia.executablePath": "/home/manuel/julia-1.7.2/julia",
-  "julia.environmentPath": "/home/manuel/.julia/environments/v1.7"
+  "julia.executablePath": "/home/manuel/julia-1.7.2/julia"
 }

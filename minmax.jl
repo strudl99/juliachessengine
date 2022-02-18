@@ -278,7 +278,7 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
             end
             undo = strudlmove!(chessboard, leg[i], pv)
             legal += 1
-            if foundPv
+            #= if foundPv
                 score = -negamax(depth - 2, initalDepth, -alpha - 1, -alpha, chessboard, -color, true, pv, key, lists)
                 if score > alpha && score < beta
                     score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
@@ -288,22 +288,23 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
                 if score > alpha
                     score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
                 end
-            end
-
+            end =#
+            score = -negamax(depth - 2, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
             undostrudlmove!(chessboard, undo, pv)
         else
             # global checkmate = false 
             undo = strudlmove!(chessboard, leg[i], pv)
             legal += 1
             #print(undo)
-            if foundPv
+            #= if foundPv
                 score = -negamax(depth - 1, initalDepth, -alpha - 1, -alpha, chessboard, -color, true, pv, key, lists)
                 if score > alpha && score < beta
                     score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
                 end
             else
                 score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
-            end
+            end =#
+            score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
             undostrudlmove!(chessboard, undo, pv)
         end
 
@@ -353,6 +354,22 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
 end
 
 
+function searchWiden(depth, val, board, side, pv, key, list)
+    if val < (pv.INF - 50) || val > (-pv.INF + 50)
+        temp = negamax(depth, depth, -pv.INF, pv.INF, board, side == WHITE ? 1 : -1, true, pv, key, list)
+    else
+        temp = val
+        alpha = val - 50
+        beta = val + 50
+
+        temp = negamax(depth, depth, alpha, beta, board, side == WHITE ? 1 : -1, true, pv, key, list)
+        if temp <= alpha || temp >= beta
+            temp = negamax(depth, depth, -pv.INF, pv.INF, board, side == WHITE ? 1 : -1, true, pv, key, list)
+        end
+    end
+    return temp
+end
+
 
 function calc_best_move(board, depth, pv, key, posKey)::Move
     global calculating = true
@@ -401,7 +418,10 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
     bestscore_prev = -pv.INF
     numBestMoves = 0
     playtimeBool = true
-    @inbounds for current_depth in 1:1:max_death-1
+    ## do a full depth 1-ply search to get an estimate
+    value = negamax(1, 1, -pv.INF, pv.INF, board, side == WHITE ? 1 : -1, true, pv, key, lists1)
+    #print(value)
+    @inbounds for current_depth in 2:1:max_death-1
         global calculating = true
         global begin_time = round(Int64, time() * 1000)
         if pv.debug
@@ -415,10 +435,8 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         end
         # global hashcut = 0
         b1 = deepcopy(board)
-        b2 = deepcopy(board)
         global timeover = false
-        c1 = current_depth
-        value = negamax(c1, c1, -pv.INF, pv.INF, b1, side == WHITE ? 1 : -1, true, pv, key, lists1)
+        value = searchWiden(current_depth, value, b1, side, pv, key, lists1)
 
         #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists3)
         #negamax(current_depth, current_depth,-pv.INF , pv.INF, Board(chessboard.board, chessboard.bycolor, chessboard.bytype, chessboard.side, chessboard.castlerights, chessboard.castlefiles, chessboard.epsq, chessboard.r50, chessboard.ksq, chessboard.move, chessboard.occ, chessboard.checkers, chessboard.pin, chessboard.key, chessboard.is960), side == WHITE ? 1 : -1, true, pv, key, lists4)
@@ -446,7 +464,7 @@ function calc_best_move(board, depth, pv, key, posKey)::Move
         end
         bestmove_prev = best_move
         bestscore_prev = value
-        get_history(current_depth, b2, key, pv)
+        get_history(current_depth, b1, key, pv)
         print("info score cp ", value, " currmove ", tostring(best_move), " depth ", current_depth, " nodes ", key.nodes[1], " time ", (round(Int64, time() * 1000) - begin_time), " pv ")
         @inbounds for i in 1:1:5
             if pv.history[i] != MOVE_NULL

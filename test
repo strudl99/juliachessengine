@@ -1,40 +1,14 @@
 rnbqk1nr/p4p2/8/1pppp1pp/2P1Pb2/2BP1N2/PP3PPP/RN1QKB1R w KQkq - 0 1
-info score cp 185 currmove c4d5 depth 1 nodes 92 time 583 pv c4d5
-info score cp 165 currmove c4d5 depth 2 nodes 960 time 2 pv c4d5 c8g4
-info score cp 187 currmove c4d5 depth 3 nodes 3077 time 9 pv c4d5 c8g4 f1e2
-info score cp 200 currmove c4d5 depth 4 nodes 12988 time 22 pv c4d5 c8g4 h2h3 g4f3
-info score cp 208 currmove c4d5 depth 5 nodes 37320 time 44 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 6 nodes 113092 time 321 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 7 nodes 357140 time 381 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 8 nodes 915706 time 843 pv c4d5 b8d7 g2g3 b5b4 g3f4
 
-
-info score cp 185 currmove c4d5 depth 1 nodes 92 time 406 pv c4d5
-info score cp 165 currmove c4d5 depth 2 nodes 923 time 1 pv c4d5 c8g4
-info score cp 187 currmove c4d5 depth 3 nodes 3100 time 35 pv c4d5 c8g4 f1e2
-info score cp 200 currmove c4d5 depth 4 nodes 12654 time 15 pv c4d5 c8g4 h2h3 g4f3
-info score cp 208 currmove c4d5 depth 5 nodes 36818 time 47 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 6 nodes 127276 time 188 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 7 nodes 373041 time 446 pv c4d5 b8d7 g2g3 b5b4 g3f4
-info score cp 208 currmove c4d5 depth 8 nodes 928771 time 958 pv c4d5 b8d7 g2g3 b5b4 g3f4
-
-## One Thread
-info score cp 185 currmove c4d5 depth 1 nodes 93 time 503 pv c4d5 
-info score cp 165 currmove c4d5 depth 2 nodes 962 time 1 pv c4d5 c8g4 
-info score cp 187 currmove c4d5 depth 3 nodes 3150 time 4 pv c4d5 c8g4 f1e2 
-info score cp 200 currmove c4d5 depth 4 nodes 12813 time 16 pv c4d5 c8g4 h2h3 g4f3 
-info score cp 208 currmove c4d5 depth 5 nodes 35558 time 34 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 6 nodes 126575 time 288 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 7 nodes 374974 time 275 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 8 nodes 939482 time 585 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 243 currmove c4d5 depth 9 nodes 2483873 time 1825 pv c4d5 b8d7 g2g3 b5b4 g3f4
-
-## Two threads
-info score cp 185 currmove c4d5 depth 1 nodes 92 time 530 pv c4d5 
-info score cp 165 currmove c4d5 depth 2 nodes 960 time 2 pv c4d5 c8g4 
-info score cp 187 currmove c4d5 depth 3 nodes 3145 time 4 pv c4d5 c8g4 f1e2 
-info score cp 200 currmove c4d5 depth 4 nodes 12555 time 17 pv c4d5 c8g4 h2h3 g4f3 
-info score cp 208 currmove c4d5 depth 5 nodes 36017 time 43 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 6 nodes 127330 time 319 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 7 nodes 376676 time 378 pv c4d5 b8d7 g2g3 b5b4 g3f4 
-info score cp 208 currmove c4d5 depth 8 nodes 932902 time 798 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 165 currmove f3e5 depth 1 nodes 371 time 1 pv f3e5 
+info score cp 160 currmove f3e5 depth 2 nodes 1413 time 2 pv f3e5 f7f6 
+info score cp 164 currmove c4d5 depth 3 nodes 10123 time 16 pv c4d5 c8g4 f1e2 
+info score cp 184 currmove c4d5 depth 4 nodes 19407 time 7 pv c4d5 c8g4 h2h3 g4f3 
+info score cp 184 currmove c4d5 depth 5 nodes 41557 time 8 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 184 currmove c4d5 depth 6 nodes 111376 time 22 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 184 currmove c4d5 depth 7 nodes 382239 time 93 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 184 currmove c4d5 depth 8 nodes 1044447 time 193 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 204 currmove c4d5 depth 9 nodes 2800744 time 547 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 184 currmove c4d5 depth 10 nodes 6930983 time 1201 pv c4d5 f7f6 g2g3 b5b4 g3f4 
+info score cp 195 currmove c4d5 depth 11 nodes 19079895 time 3549 pv c4d5 b8d7 g2g3 b5b4 g3f4 
+info score cp 194 currmove c4d5 depth 12 nodes 58797044 time 11663 pv c4d5 b8d7 g2g3 b5b4 g3f4 
