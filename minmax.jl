@@ -92,7 +92,9 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
                 value = pv.searchHistory[from(m[i]).val, to(m[i]).val]
             end
         else
-            if moveto != EMPTY
+            if sidetomove(chessboard) == BLACK && moveto == PIECE_WK || sidetomove(chessboard) == WHITE && moveto == PIECE_BK
+                value = 2000000
+            elseif moveto != EMPTY
                 value = 1000000 + pv.mvvlva_scores[ptype(moveto).val, ptype(pieceon(chessboard, from(m[i]))).val]
                 #println("$(pieceon(chessboard, from(m[i]))) x $(moveto) : $(pv.mvvlva_scores[ptype(moveto).val, ptype(pieceon(chessboard, from(m[i]))).val])")
                 #println("$(m[i])")
@@ -113,16 +115,13 @@ function pick_next_move_fast(chessboard::Board, move_num::Int, pv::Pv, m::MoveLi
 end
 
 function strudlmove!(chessboard, move, pv)
-    try
-        u = domove!(chessboard, move)
-        pv.repetition[pv.hisPly[1]+1] = chessboard.key
-        pv.hisPly[1] += 1
-        pv.ply[1] += 1
-        return u
-    catch e
-        println(chessboard, move)
-        throw(e)
-    end
+
+    u = domove!(chessboard, move)
+    pv.repetition[pv.hisPly[1]+1] = chessboard.key
+    pv.hisPly[1] += 1
+    pv.ply[1] += 1
+    return u
+
 
 
 end
@@ -227,13 +226,14 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
     if pv.ply[1] > 20
         return evaluate_board(chessboard, pv)::Int
     end
-
-    hashbool, hashscore::Int, pv_move::Move = probe_hash_entry(chessboard, score, alpha, beta, depth, pv, key)
-    if hashbool
-        if pv.debug
-            global hashcut += 1::Int
+    if initalDepth > 4
+        hashbool, hashscore::Int, pv_move::Move = probe_hash_entry(chessboard, score, alpha, beta, depth, pv, key)
+        if hashbool
+            if pv.debug
+                global hashcut += 1::Int
+            end
+            return hashscore
         end
-        return hashscore
     end
     check = ischeck(chessboard)
 
@@ -266,7 +266,7 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
     legal = 0::Int
     score = -pv.INF
     foundPv = false::Bool
-    eval = evaluate_board(chessboard, pv)
+    #eval = evaluate_board(chessboard, pv)
 
     @inbounds for i in 1:1:leg.count
 
@@ -278,33 +278,28 @@ function negamax(depth, initalDepth, alpha::Int, beta::Int, chessboard, color, n
             end
             undo = strudlmove!(chessboard, leg[i], pv)
             legal += 1
-            #= if foundPv
-                score = -negamax(depth - 2, initalDepth, -alpha - 1, -alpha, chessboard, -color, true, pv, key, lists)
-                if score > alpha && score < beta
-                    score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
-                end
-            else
-                score = -negamax(depth - 2, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
-                if score > alpha
-                    score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
-                end
-            end =#
+
             score = -negamax(depth - 2, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
+            if score > alpha
+                score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
+            end
+
+            #score = -negamax(depth - 2, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
             undostrudlmove!(chessboard, undo, pv)
         else
             # global checkmate = false 
             undo = strudlmove!(chessboard, leg[i], pv)
             legal += 1
             #print(undo)
-            #= if foundPv
+            if foundPv && depth >= 1
                 score = -negamax(depth - 1, initalDepth, -alpha - 1, -alpha, chessboard, -color, true, pv, key, lists)
                 if score > alpha && score < beta
                     score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
                 end
             else
                 score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
-            end =#
-            score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
+            end
+            #score = -negamax(depth - 1, initalDepth, -beta, -alpha, chessboard, -color, true, pv, key, lists)
             undostrudlmove!(chessboard, undo, pv)
         end
 

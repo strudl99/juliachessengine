@@ -148,8 +148,6 @@ function probe_Pv_Table(chessboard, keys::Keys, pvtable::Pv)::Move
     end
     return MOVE_NULL
 end
-const mutex1 = Threads.Condition()
-const mutex2 = Threads.Condition()
 
 function store_Pv_Move(chessboard, move, score, flags::FLAGS, depth, keys::Keys, pvtable::Pv)
 
